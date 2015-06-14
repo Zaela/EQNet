@@ -1356,11 +1356,13 @@ struct GuildsListEntry_Struct {
 	char name[64];
 };
 
+/*
 static const uint32_t MAX_NUMBER_GUILDS = 1500;
 struct GuildsList_Struct {
 	uint8_t head[64]; // First on guild list seems to be empty...
 	GuildsListEntry_Struct Guilds[MAX_NUMBER_GUILDS];
 };
+*/
 
 struct GuildUpdate_Struct {
 	uint32_t	guildID;

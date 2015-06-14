@@ -8,6 +8,8 @@ EQNet_Event* EQNet_Poll(EQNet* net)
 		net->connection->pump();
 	}
 
+	net->connection->checkAutoAck();
+
 	if (net->eventQueueReadPos < net->eventQueueWritePos)
 	{
 		return &net->eventQueue[net->eventQueueReadPos++];

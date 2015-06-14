@@ -23,6 +23,7 @@ EQNet* EQNet_Create()
 	memset(net, 0, sizeof(EQNet));
 
 	net->mode = MODE_LOGIN;
+	net->clientVersion = EQNET_CLIENT_TITANIUM;
 	
 	net->eventQueue = new EQNet_Event[EQNET_EVENT_QUEUE_DEFAULT_LEN];
 	net->eventQueueCap = EQNET_EVENT_QUEUE_DEFAULT_LEN;
@@ -57,4 +58,9 @@ void EQNet_Destroy(EQNet* net)
 	freeServerList(net);
 
 	delete net;
+}
+
+void EQNet_SetClientVersion(EQNet* net, int version)
+{
+	net->clientVersion = version;
 }

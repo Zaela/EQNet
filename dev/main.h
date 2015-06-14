@@ -17,12 +17,14 @@ enum EQNet_Mode
 	MODE_LOGIN,
 	MODE_SERVER_SELECT,
 	MODE_WORLD,
+	MODE_CHAR_SELECT,
 	MODE_ZONE
 };
 
 struct EQNet
 {
 	int mode;
+	int clientVersion;
 
 	/* Event Queue */
 	int eventQueueReadPos;
@@ -44,6 +46,13 @@ struct EQNet
 	EQNet_Server* serverList;
 	EQNet_Server* selectedServer;
 	Address addressLogin;
+
+	/* World */
+	int guildListCount;
+	EQNet_Guild* guildList;
+	int charListCount;
+	EQNet_Character* charList;
+	const char* serverShortName;
 
 	/* Error */
 	char errMsg[EQNET_MAX_ERR_LEN];

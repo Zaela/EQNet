@@ -103,6 +103,7 @@
     <ClInclude Include="dev\stdafx.h" />
     <ClInclude Include="dev\structs_login.h" />
     <ClInclude Include="dev\structs_titanium.h" />
+    <ClInclude Include="dev\util.h" />
     <ClInclude Include="include\eqnet.h" />
   </ItemGroup>
   <ItemGroup>
@@ -123,6 +124,8 @@
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">Create</PrecompiledHeader>
       <PrecompiledHeaderOutputFile Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">build\$(TargetName).pch</PrecompiledHeaderOutputFile>
     </ClCompile>
+    <ClCompile Include="src\util.cpp" />
+    <ClCompile Include="src\world.cpp" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

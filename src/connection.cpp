@@ -216,6 +216,8 @@ void Connection::processPacketLogin(uint16_t opcode, byte* data, uint32_t len)
 		// init session with world
 		initiateSession();
 
+		setAutoAckEnabled(true);
+
 		// say hello to the world server
 
 		Packet packet(sizeof(LoginInfo_Struct), OP_SendLoginInfo, this);
@@ -231,7 +233,7 @@ void Connection::processPacketLogin(uint16_t opcode, byte* data, uint32_t len)
 	}
 
 	default:
-		printf("unhandled opcode: 0x%0.4X\n", opcode);
+		printf("unhandled login opcode: 0x%0.4X\n", opcode);
 		break;
 	}
 }
@@ -240,6 +242,123 @@ void Connection::processPacketWorld(uint16_t opcode, byte* data, uint32_t len)
 {
 	switch (opcode)
 	{
+	case OP_GuildsList:
+	{
+		GuildsListEntry_Struct* guilds = (GuildsListEntry_Struct*)data;
+
+		if (mEQNet->guildList)
+		{
+			delete[] mEQNet->guildList;
+			mEQNet->guildListCount = 0;
+		}
+
+		// count the number of actual guild names represented
+		int numGuilds = 0;
+		GuildsListEntry_Struct* g = guilds;
+		uint32_t pos = 0;
+		while (pos < len)
+		{
+			if (g->name[0] != 0)
+				++numGuilds;
+			++g;
+			pos += sizeof(GuildsListEntry_Struct);
+		}
+
+		if (numGuilds == 0)
+			break;
+
+		// copy only actual guild names
+		EQNet_Guild* list = new EQNet_Guild[numGuilds];
+		memset(list, 0, sizeof(EQNet_Guild) * numGuilds);
+
+		mEQNet->guildList = list;
+		mEQNet->guildListCount = numGuilds;
+
+		pos = 0;
+		int id = 0;
+		g = guilds;
+		while (pos < len)
+		{
+			if (g->name[0] != 0)
+			{
+				list->id = id;
+				Util::strcpy(list->name, g->name, 64);
+				++list;
+			}
+			++id;
+			++g;
+			pos += sizeof(GuildsListEntry_Struct);
+		}
+
+		break;
+	}
+
+	case OP_SendCharInfo:
+	{
+		CharacterSelect_Struct* cs = (CharacterSelect_Struct*)data;
+
+		if (mEQNet->charList)
+		{
+			delete[] mEQNet->charList;
+			mEQNet->charListCount = 0;
+		}
+
+		int countChars = 0;
+		for (int i = 0; i < 10; ++i)
+		{
+			if (cs->level[i] != 0)
+				++countChars;
+		}
+
+		if (countChars > 0)
+		{
+			EQNet_Character* list = new EQNet_Character[countChars];
+
+			mEQNet->charList = list;
+			mEQNet->charListCount = countChars;
+
+			for (int i = 0; i < 10; ++i)
+			{
+				if (cs->level[i] == 0)
+					continue;
+
+				Util::strcpy(list->name, cs->name[i], 64);
+				list->level		= cs->level[i];
+				list->charClass	= cs->class_[i];
+				list->race		= cs->race[i];
+				list->gender	= cs->gender[i];
+				list->deity		= cs->deity[i];
+				list->zone		= cs->zone[i];
+
+				++list;
+			}
+		}
+
+		mEQNet->mode = MODE_CHAR_SELECT;
+		queueEvent(mEQNet, EQNET_WORLD_AT_CHAR_SELECT);
+		break;
+	}
+
+	case OP_LogServer:
+	{
+		const char* shortname = (char*)(data + 32);
+		size_t len = strlen(shortname) + 1;
+
+		char* str = new char[len];
+		memcpy(str, shortname, len);
+
+		if (mEQNet->serverShortName)
+			delete[] mEQNet->serverShortName;
+		mEQNet->serverShortName = str;
+		break;
+	}
+
+	case OP_ApproveWorld:
+	case OP_EnterWorld:
+	case OP_PostEnterWorld:
+	case OP_ExpansionInfo:
+		break;
+
 	default:
 		printf("unhandled world opcode: 0x%0.4X\n", opcode);
 		break;

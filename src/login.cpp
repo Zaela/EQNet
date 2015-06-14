@@ -21,6 +21,9 @@ int EQNet_LoginToServerSelect(EQNet* net, const char* username, const char* pass
 	if (net->mode != MODE_LOGIN)
 		return false;
 
+	if (net->credentials)
+		EQNet_Free(net->credentials);
+
 	// encrypt username and password
 	size_t len = strlen(username) + strlen(password) + 2; // include null terminators
 	char buf[128];
@@ -31,6 +34,12 @@ int EQNet_LoginToServerSelect(EQNet* net, const char* username, const char* pass
 
 	net->credentials = EQNet_Encrypt(buf, &len);
 	net->credentialsLen = len;
+
+	if (net->credentials == nullptr)
+	{
+		setFatalErrorMessage(net, "Encryption failed");
+		return false;
+	}
 
 	net->connection->setAddress(net->addressLogin);
 	net->connection->connect();
@@ -58,9 +67,10 @@ int EQNet_LoginToWorld(EQNet* net, EQNet_Server* server)
 	return true;
 }
 
-EQNet_Server* EQNet_GetServerList(EQNet* net, int* count)
+const EQNet_Server* EQNet_GetServerList(EQNet* net, int* count)
 {
-	*count = net->serverListCount;
+	if (count)
+		*count = net->serverListCount;
 	return net->serverList;
 }
 

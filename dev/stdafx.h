@@ -16,6 +16,7 @@
 #include "login.h"
 #include "error.h"
 #include "socket.h"
+#include "util.h"
 
 #include "structs_login.h"
 #include "structs_titanium.h"

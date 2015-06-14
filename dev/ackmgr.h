@@ -3,6 +3,7 @@
 #define _EQNET_ACKMGR_H_
 
 #include <queue>
+#include <chrono>
 
 #include "main.h"
 #include "socket.h"
@@ -16,6 +17,9 @@ private:
 
 	uint32_t mCRCKey;
 	uint32_t mSessionID;
+
+	std::chrono::system_clock::time_point mAutoAckTimestamp;
+	bool mAutoAckEnabled;
 
 	//these overflow by design
 	uint16_t mNextSeq;
@@ -35,6 +39,9 @@ private:
 protected:
 	std::queue<ReadPacket*> mReadPacketQueue;
 
+protected:
+	void setAutoAckEnabled(bool to) { mAutoAckEnabled = to; }
+
 private:
 	enum PacketSequence
 	{
@@ -50,6 +57,8 @@ private:
 
 public:
 	AckManager(EQNet* net);
+
+	void checkAutoAck();
 
 	uint16_t getNextSequence() { return ++mNextSeq; }
 

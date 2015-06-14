@@ -3,6 +3,7 @@
 
 AckManager::AckManager(EQNet* net) :
 	Socket(net),
+	mAutoAckEnabled(false),
 	mNextSeq(65535),
 	mExpectedSeq(0),
 	mLastReceivedAck(65535),
@@ -67,6 +68,17 @@ void AckManager::sendAck(uint16_t seq)
 {
 	mEQNet->ackPacket->setSequence(seq);
 	mEQNet->ackPacket->send(mEQNet);
+	mAutoAckTimestamp = std::chrono::system_clock::now();
+}
+
+void AckManager::checkAutoAck()
+{
+	if (!mAutoAckEnabled)
+		return;
+
+	std::chrono::duration<double> diff = std::chrono::system_clock::now() - mAutoAckTimestamp;
+	if (diff.count() > 4.0)
+		sendKeepAliveAck();
 }
 
 void AckManager::sendKeepAliveAck()
