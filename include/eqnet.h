@@ -9,9 +9,17 @@
 #include <stdint.h>
 
 #ifdef _WIN32
-#define EQNET_EXPORT extern "C" __declspec(dllexport)
+ #ifdef EQNET_BUILD
+  #define EQNET_API __declspec(dllexport)
+ #else
+  #define EQNET_API __declspec(dllimport)
+ #endif
 #else
-#define EQNET_EXPORT extern "C"
+ #define EQNET_API extern
+#endif
+
+#ifdef __cplusplus
+extern "C" {
 #endif
 
 /*
@@ -24,10 +32,10 @@ typedef struct EQNet EQNet;
 ** Initialization and deinitialization
 */
 
-EQNET_EXPORT int	EQNet_Init();
-EQNET_EXPORT void	EQNet_Close();
-EQNET_EXPORT EQNet*	EQNet_Create();
-EQNET_EXPORT void	EQNet_Destroy(EQNet*);
+EQNET_API int		EQNet_Init();
+EQNET_API void		EQNet_Close();
+EQNET_API EQNet*	EQNet_Create();
+EQNET_API void		EQNet_Destroy(EQNet*);
 
 /*
 ** Fatal Errors
@@ -35,7 +43,7 @@ EQNET_EXPORT void	EQNet_Destroy(EQNet*);
 
 #define EQNET_MAX_ERR_LEN 1024
 
-EQNET_EXPORT const char*	EQNet_GetErrorMessage(EQNet*);
+EQNET_API const char*	EQNet_GetErrorMessage(EQNet*);
 
 /*
 ** Login
@@ -52,13 +60,13 @@ typedef struct EQNet_Server {
 	uint32_t playerCount;
 } EQNet_Server;
 
-EQNET_EXPORT void			EQNet_SetLoginServer(EQNet*, const char* ip, uint16_t port);
-EQNET_EXPORT int			EQNet_LoginToServerSelect(EQNet*, const char* username, const char* password);
-EQNET_EXPORT int			EQNet_LoginToWorld(EQNet*, EQNet_Server* server);
+EQNET_API void			EQNet_SetLoginServer(EQNet*, const char* ip, uint16_t port);
+EQNET_API int			EQNet_LoginToServerSelect(EQNet*, const char* username, const char* password);
+EQNET_API int			EQNet_LoginToWorld(EQNet*, EQNet_Server* server);
 
-EQNET_EXPORT EQNet_Server*	EQNet_GetServerList(EQNet*, int* count);
-EQNET_EXPORT int			EQNet_ServerIsUp(EQNet*, EQNet_Server* server);
-EQNET_EXPORT int			EQNet_ServerIsLocked(EQNet*, EQNet_Server* server);
+EQNET_API EQNet_Server*	EQNet_GetServerList(EQNet*, int* count);
+EQNET_API int			EQNet_ServerIsUp(EQNet*, EQNet_Server* server);
+EQNET_API int			EQNet_ServerIsLocked(EQNet*, EQNet_Server* server);
 
 /*
 ** Events
@@ -68,7 +76,7 @@ typedef struct EQNet_Event {
 	int type;
 } EQNet_Event;
 
-EQNET_EXPORT EQNet_Event*	EQNet_Poll(EQNet*);
+EQNET_API EQNet_Event*	EQNet_Poll(EQNet*);
 
 enum EQNet_EventType
 {
@@ -84,5 +92,9 @@ enum EQNet_EventType
 	/* World */
 	EQNET_WORLD_CONNECT_FAILED
 };
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif/*_EQNET_H_*/

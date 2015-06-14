@@ -24,6 +24,7 @@ int EQNet_LoginToServerSelect(EQNet* net, const char* username, const char* pass
 	// encrypt username and password
 	size_t len = strlen(username) + strlen(password) + 2; // include null terminators
 	char buf[128];
+	memset(buf, 0, sizeof(buf));
 
 	snprintf(buf, 128, "%s", username);
 	snprintf(buf + strlen(username) + 1, 128, "%s", password);
