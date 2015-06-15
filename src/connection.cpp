@@ -225,55 +225,7 @@ void Connection::processPacketWorld(uint16_t opcode, byte* data, uint32_t len)
 	{
 	case EQNET_OP_GuildsList:
 	{
-		// this seems to be the same for all client versions
-		/*
-		Titanium::GuildsListEntry_Struct* guilds = (Titanium::GuildsListEntry_Struct*)data;
-
-		if (mEQNet->guildList)
-		{
-			delete[] mEQNet->guildList;
-			mEQNet->guildListCount = 0;
-		}
-
-		// count the number of actual guild names represented
-		int numGuilds = 0;
-		Titanium::GuildsListEntry_Struct* g = guilds;
-		uint32_t pos = 0;
-		while (pos < len)
-		{
-			if (g->name[0] != 0)
-				++numGuilds;
-			++g;
-			pos += sizeof(Titanium::GuildsListEntry_Struct);
-		}
-
-		if (numGuilds == 0)
-			break;
-
-		// copy only actual guild names
-		EQNet_Guild* list = new EQNet_Guild[numGuilds];
-		memset(list, 0, sizeof(EQNet_Guild) * numGuilds);
-
-		mEQNet->guildList = list;
-		mEQNet->guildListCount = numGuilds;
-
-		pos = 0;
-		int id = 0;
-		g = guilds;
-		while (pos < len)
-		{
-			if (g->name[0] != 0)
-			{
-				list->id = id;
-				Util::strcpy(list->name, g->name, 64);
-				++list;
-			}
-			++id;
-			++g;
-			pos += sizeof(Titanium::GuildsListEntry_Struct);
-		}*/
 		readGuilds(mEQNet, data, len);
-
 		break;
 	}
 
