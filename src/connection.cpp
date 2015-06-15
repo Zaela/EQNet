@@ -63,8 +63,18 @@ void Connection::processPackets()
 		mReadPacketQueue.pop();
 
 		uint16_t opcode = *(uint16_t*)packet->data;
-		byte* data = packet->data + 2;
-		uint32_t len = packet->len - 2;
+		int offset = 2;
+
+		// opcodes with a low-order byte (post-byte order flip) of 0 (e.g. 0x4200 -> 00 42 in memory)
+		// are preceded with an extra 0 byte (e.g. 00 42 -> 00 00 42)
+		if (opcode == 0)
+		{
+			opcode = *(uint16_t*)(packet->data + 1);
+			offset = 3;
+		}
+
+		byte* data = packet->data + offset;
+		uint32_t len = packet->len - offset;
 		
 		switch (mEQNet->mode)
 		{
@@ -220,8 +230,10 @@ void Connection::processPacketLogin(uint16_t opcode, byte* data, uint32_t len)
 
 		// say hello to the world server
 
-		Packet packet(sizeof(LoginInfo_Struct), OP_SendLoginInfo, this);
-		LoginInfo_Struct* li = (LoginInfo_Struct*)packet.getDataBuffer();
+		// struct seems to be the same for all client versions
+		Packet packet(sizeof(Titanium::LoginInfo_Struct),
+			translateOpcodeToServer(mEQNet, EQNET_OP_SendLoginInfo), this);
+		Titanium::LoginInfo_Struct* li = (Titanium::LoginInfo_Struct*)packet.getDataBuffer();
 
 		// login_info -> accountID as a string, null terminator, session key
 		memset(li->login_info, 0, 64);
@@ -240,11 +252,13 @@ void Connection::processPacketLogin(uint16_t opcode, byte* data, uint32_t len)
 
 void Connection::processPacketWorld(uint16_t opcode, byte* data, uint32_t len)
 {
-	switch (opcode)
+	printf("opcode 0x%0.4X -> 0x%0.4X\n", opcode, translateOpcodeFromServer(mEQNet, opcode));
+	switch (translateOpcodeFromServer(mEQNet, opcode))
 	{
-	case OP_GuildsList:
+	case EQNET_OP_GuildsList:
 	{
-		GuildsListEntry_Struct* guilds = (GuildsListEntry_Struct*)data;
+		// this seems to be the same for all client versions
+		Titanium::GuildsListEntry_Struct* guilds = (Titanium::GuildsListEntry_Struct*)data;
 
 		if (mEQNet->guildList)
 		{
@@ -254,14 +268,14 @@ void Connection::processPacketWorld(uint16_t opcode, byte* data, uint32_t len)
 
 		// count the number of actual guild names represented
 		int numGuilds = 0;
-		GuildsListEntry_Struct* g = guilds;
+		Titanium::GuildsListEntry_Struct* g = guilds;
 		uint32_t pos = 0;
 		while (pos < len)
 		{
 			if (g->name[0] != 0)
 				++numGuilds;
 			++g;
-			pos += sizeof(GuildsListEntry_Struct);
+			pos += sizeof(Titanium::GuildsListEntry_Struct);
 		}
 
 		if (numGuilds == 0)
@@ -287,59 +301,22 @@ void Connection::processPacketWorld(uint16_t opcode, byte* data, uint32_t len)
 			}
 			++id;
 			++g;
-			pos += sizeof(GuildsListEntry_Struct);
+			pos += sizeof(Titanium::GuildsListEntry_Struct);
 		}
 
 		break;
 	}
 
-	case OP_SendCharInfo:
+	case EQNET_OP_SendCharInfo:
 	{
-		CharacterSelect_Struct* cs = (CharacterSelect_Struct*)data;
-
-		if (mEQNet->charList)
-		{
-			delete[] mEQNet->charList;
-			mEQNet->charListCount = 0;
-		}
-
-		int countChars = 0;
-		for (int i = 0; i < 10; ++i)
-		{
-			if (cs->level[i] != 0)
-				++countChars;
-		}
-
-		if (countChars > 0)
-		{
-			EQNet_Character* list = new EQNet_Character[countChars];
-
-			mEQNet->charList = list;
-			mEQNet->charListCount = countChars;
-
-			for (int i = 0; i < 10; ++i)
-			{
-				if (cs->level[i] == 0)
-					continue;
-
-				Util::strcpy(list->name, cs->name[i], 64);
-				list->level		= cs->level[i];
-				list->charClass	= cs->class_[i];
-				list->race		= cs->race[i];
-				list->gender	= cs->gender[i];
-				list->deity		= cs->deity[i];
-				list->zone		= cs->zone[i];
-
-				++list;
-			}
-		}
+		readCharSelectCharacters(mEQNet, data, len);
 
 		mEQNet->mode = MODE_CHAR_SELECT;
 		queueEvent(mEQNet, EQNET_WORLD_AT_CHAR_SELECT);
 		break;
 	}
 
-	case OP_LogServer:
+	case EQNET_OP_LogServer:
 	{
 		const char* shortname = (char*)(data + 32);
 		size_t len = strlen(shortname) + 1;
@@ -353,14 +330,17 @@ void Connection::processPacketWorld(uint16_t opcode, byte* data, uint32_t len)
 		break;
 	}
 
-	case OP_ApproveWorld:
-	case OP_EnterWorld:
-	case OP_PostEnterWorld:
-	case OP_ExpansionInfo:
+	case EQNET_OP_ApproveWorld:
+	case EQNET_OP_EnterWorld:
+	case EQNET_OP_PostEnterWorld:
+	case EQNET_OP_ExpansionInfo:
 		break;
 
 	default:
 		printf("unhandled world opcode: 0x%0.4X\n", opcode);
+		for (uint32_t i = 0; i < len; ++i)
+			printf("%0.2X ", data[i]);
+		printf("\n");
 		break;
 	}
 }

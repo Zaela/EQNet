@@ -2,21 +2,30 @@
 #ifndef _EQNET_OPCODES_TITANIUM_H_
 #define _EQNET_OPCODES_TITANIUM_H_
 
-//world packets
-#define OP_SendLoginInfo	0x4DD0
-#define OP_GuildsList		0x6957
-#define OP_LogServer		0x0FA6
-#define OP_ApproveWorld		0x3C25
-#define OP_SendCharInfo		0x4513
-#define OP_EnterWorld		0x7CBA
-#define OP_PostEnterWorld	0x52A4
-#define OP_ExpansionInfo	0x04EC
-#define OP_AckPacket		0x7752
-#define OP_MOTD				0x024D
-#define OP_SetChatServer	0x00D7
-#define OP_SetChatServer2	0x6536
-#define OP_ZoneUnavail		0x407C
-#define OP_ZoneServerInfo	0x61B6
+#include <cstdint>
+#include "opcode_eqnet.h"
+
+namespace Titanium
+{
+	static const OpCodeTranslation toCanonical[] = {
+			/* World packets */
+			{ 0x4DD0, EQNET_OP_SendLoginInfo },
+			{ 0x6957, EQNET_OP_GuildsList },
+			{ 0x0FA6, EQNET_OP_LogServer },
+			{ 0x3C25, EQNET_OP_ApproveWorld },
+			{ 0x4513, EQNET_OP_SendCharInfo },
+			{ 0x7CBA, EQNET_OP_EnterWorld },
+			{ 0x52A4, EQNET_OP_PostEnterWorld },
+			{ 0x04EC, EQNET_OP_ExpansionInfo },
+			/* Char select packets */
+			{ 0x7752, EQNET_OP_AckPacket },
+			{ 0x024D, EQNET_OP_MOTD },
+			{ 0x00D7, EQNET_OP_SetChatServer },
+			{ 0x6536, EQNET_OP_SetChatServer2 },
+			{ 0x407C, EQNET_OP_ZoneUnavailable },
+			{ 0x61B6, EQNET_OP_ZoneServerInfo }
+	};
+}
 
 //zone-in packets
 #define OP_ZoneEntry		0x7213

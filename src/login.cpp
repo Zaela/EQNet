@@ -30,7 +30,10 @@ int EQNet_LoginToServerSelect(EQNet* net, const char* username, const char* pass
 	memset(buf, 0, sizeof(buf));
 
 	snprintf(buf, 128, "%s", username);
-	snprintf(buf + strlen(username) + 1, 128, "%s", password);
+	size_t clen = strlen(username) + 1;
+	if (clen >= 128)
+		return false;
+	snprintf(buf + clen, 128 - clen, "%s", password);
 
 	net->credentials = EQNet_Encrypt(buf, &len);
 	net->credentialsLen = len;

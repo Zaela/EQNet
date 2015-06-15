@@ -14,15 +14,19 @@
 #include "receiver.h"
 #include "connection.h"
 #include "login.h"
+#include "world.h"
 #include "error.h"
 #include "socket.h"
 #include "util.h"
 
 #include "structs_login.h"
 #include "structs_titanium.h"
+#include "structs_underfoot.h"
 
+#include "opcode_eqnet.h"
 #include "opcode_login.h"
 #include "opcode_titanium.h"
+#include "opcode_underfoot.h"
 
 #include <cstring>
 #include <cstdio>

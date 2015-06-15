@@ -95,15 +95,19 @@
     <ClInclude Include="dev\login.h" />
     <ClInclude Include="dev\main.h" />
     <ClInclude Include="dev\network_protocol.h" />
+    <ClInclude Include="dev\opcode_eqnet.h" />
     <ClInclude Include="dev\opcode_login.h" />
     <ClInclude Include="dev\opcode_titanium.h" />
+    <ClInclude Include="dev\opcode_underfoot.h" />
     <ClInclude Include="dev\packet.h" />
     <ClInclude Include="dev\receiver.h" />
     <ClInclude Include="dev\socket.h" />
     <ClInclude Include="dev\stdafx.h" />
     <ClInclude Include="dev\structs_login.h" />
     <ClInclude Include="dev\structs_titanium.h" />
+    <ClInclude Include="dev\structs_underfoot.h" />
     <ClInclude Include="dev\util.h" />
+    <ClInclude Include="dev\world.h" />
     <ClInclude Include="include\eqnet.h" />
   </ItemGroup>
   <ItemGroup>
@@ -115,6 +119,7 @@
     <ClCompile Include="src\event.cpp" />
     <ClCompile Include="src\init.cpp" />
     <ClCompile Include="src\login.cpp" />
+    <ClCompile Include="src\opcode_eqnet.cpp" />
     <ClCompile Include="src\packet.cpp" />
     <ClCompile Include="src\receiver.cpp" />
     <ClCompile Include="src\socket.cpp" />

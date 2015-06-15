@@ -39,7 +39,8 @@ EQNET_API void      EQNet_Destroy(EQNet*);
 
 enum EQNet_ClientVersion
 {
-	EQNET_CLIENT_TITANIUM
+	EQNET_CLIENT_TITANIUM,
+	EQNET_CLIENT_UNDERFOOT
 };
 
 EQNET_API void EQNet_SetClientVersion(EQNet*, EQNet_ClientVersion version);
@@ -124,6 +125,16 @@ enum EQNet_EventType
 	/* World */
 	EQNET_WORLD_CONNECT_FAILED,
 	EQNET_WORLD_AT_CHAR_SELECT
+};
+
+/*
+** Opcodes
+*/
+
+enum EQNet_OpCodes
+{
+	EQNET_OP_NONE,
+	EQNET_OP_MAX_COUNT
 };
 
 #ifdef __cplusplus

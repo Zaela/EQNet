@@ -4,6 +4,9 @@
 
 #include <cstdint>
 
+namespace Titanium
+{
+
 static const uint32_t BUFF_COUNT = 25;
 static const uint32_t PACKET_SKILL_ARRAY_SIZE = 100;
 
@@ -3344,5 +3347,7 @@ struct LFGuild_GuildToggle_Struct
 };
 
 #pragma pack()
+
+}
 
 #endif//_EQNET_STRUCTS_TITANIUM_H

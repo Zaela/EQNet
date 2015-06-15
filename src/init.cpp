@@ -60,7 +60,7 @@ void EQNet_Destroy(EQNet* net)
 	delete net;
 }
 
-void EQNet_SetClientVersion(EQNet* net, int version)
+void EQNet_SetClientVersion(EQNet* net, EQNet_ClientVersion version)
 {
 	net->clientVersion = version;
 }
