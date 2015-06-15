@@ -1712,14 +1712,13 @@ struct Surname_Struct
 	/*0100*/
 };
 
-struct GuildsListEntry_Struct {
-	char name[64];
+struct GuildsList_Struct {
+	uint8_t unused[64];
+	uint32_t highID;
 };
 
-static const uint32_t MAX_NUMBER_GUILDS = 1500;
-struct GuildsList_Struct {
-	uint8_t head[64]; // First on guild list seems to be empty...
-	GuildsListEntry_Struct Guilds[MAX_NUMBER_GUILDS];
+struct GuildsListEntry_Struct {
+	char name[64];
 };
 
 struct GuildUpdate_Struct {

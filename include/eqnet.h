@@ -106,11 +106,27 @@ EQNET_API const EQNet_Character* EQNet_GetCharacterList(EQNet*, int* count);
 EQNET_API const char* EQNet_GetServerShortName(EQNet*);
 
 /*
+** Packets
+*/
+
+typedef struct EQNet_Packet {
+	uint8_t* data;
+	uint32_t len;
+} EQNet_Packet;
+
+/*
 ** Events
 */
 
 typedef struct EQNet_Event {
 	int type;
+	union {
+		struct {
+			uint16_t opcode;
+			EQNet_Packet packet;
+			EQNet_Packet nativePacket;
+		} Packet;
+	};
 } EQNet_Event;
 
 EQNET_API EQNet_Event* EQNet_Poll(EQNet*);

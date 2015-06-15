@@ -39,6 +39,97 @@ static void delCharList(EQNet* net)
 	}
 }
 
+static EQNet_Guild* allocGuildList(EQNet* net, int count)
+{
+	EQNet_Guild* list = new EQNet_Guild[count];
+	memset(list, 0, sizeof(EQNet_Guild) * count);
+
+	net->guildList = list;
+	net->guildListCount = count;
+	return list;
+}
+
+static void delGuildList(EQNet* net)
+{
+	if (net->guildList)
+	{
+		delete[] net->guildList;
+		net->guildListCount = 0;
+	}
+}
+
+void readGuilds(EQNet* net, byte* data, uint32_t len)
+{
+	switch (net->clientVersion)
+	{
+	case EQNET_CLIENT_TITANIUM:
+	case EQNET_CLIENT_SECRETS_OF_FAYDWER:
+	case EQNET_CLIENT_SEEDS_OF_DESTRUCTION:
+	{
+		Titanium::GuildsListEntry_Struct* guilds = (Titanium::GuildsListEntry_Struct*)data;
+
+		delGuildList(net);
+
+		// count the number of actual guild names represented
+		int numGuilds = 0;
+		Titanium::GuildsListEntry_Struct* g = guilds;
+		uint32_t pos = 0;
+		while (pos < len)
+		{
+			if (g->name[0] != 0)
+				++numGuilds;
+			++g;
+			pos += sizeof(Titanium::GuildsListEntry_Struct);
+		}
+
+		if (numGuilds == 0)
+			break;
+
+		// copy only actual guild names
+		EQNet_Guild* list = allocGuildList(net, numGuilds);
+
+		pos = 0;
+		int id = -1;
+		g = guilds;
+		while (pos < len)
+		{
+			if (g->name[0] != 0)
+			{
+				list->id = id;
+				Util::strcpy(list->name, g->name, 64);
+				++list;
+			}
+			++id;
+			++g;
+			pos += sizeof(Titanium::GuildsListEntry_Struct);
+		}
+		break;
+	}
+	case EQNET_CLIENT_UNDERFOOT:
+	case EQNET_CLIENT_REIGN_OF_FEAR:
+	case EQNET_CLIENT_REIGN_OF_FEAR2:
+	{
+		Underfoot::GuildsList_Struct* guilds = (Underfoot::GuildsList_Struct*)data;
+
+		EQNet_Guild* list = allocGuildList(net, guilds->highID - 1);
+		// uint32_t id + cstr name
+		uint32_t pos = sizeof(Underfoot::GuildsList_Struct);
+		for (uint32_t i = 1; i < guilds->highID; ++i)
+		{
+			list->id = *(uint32_t*)(data + pos);
+			pos += sizeof(uint32_t);
+
+			char* cstr = (char*)(data + pos);
+			Util::strcpy(list->name, cstr, 64);
+
+			++list;
+			pos += strlen(cstr) + 1;
+		}
+		break;
+	}
+	} // switch
+}
+
 void readCharSelectCharacters(EQNet* net, byte* data, uint32_t len)
 {
 	switch (net->clientVersion)

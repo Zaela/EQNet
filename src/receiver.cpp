@@ -36,7 +36,9 @@ void Receiver::readPacket(byte* data, uint32_t len, bool fromCombined)
 
 		setCRCKey(crcKey);
 
-		if (mEQNet->mode == MODE_LOGIN)
+		switch (mEQNet->mode)
+		{
+		case MODE_LOGIN:
 		{
 			// send session ready packet
 			Packet packet(12, OP_SessionReady, this, OP_Packet, false, false);
@@ -45,11 +47,34 @@ void Receiver::readPacket(byte* data, uint32_t len, bool fromCombined)
 			b[10] = 8;
 
 			packet.send(mEQNet);
+			break;
 		}
-		else
+		case MODE_WORLD:
 		{
 			// echo session response to the server
 			sendPacket(data, len);
+
+			// say hello to the world server
+			setAutoAckEnabled(true);
+
+			// struct seems to be the same for all client versions
+			Packet packet(sizeof(Titanium::LoginInfo_Struct),
+				translateOpcodeToServer(mEQNet, EQNET_OP_SendLoginInfo), this);
+			Titanium::LoginInfo_Struct* li = (Titanium::LoginInfo_Struct*)packet.getDataBuffer();
+
+			// login_info -> accountID as a string, null terminator, session key
+			memset(li->login_info, 0, 64);
+			itoa(getAccountID(), li->login_info, 10);
+			memcpy(&li->login_info[strlen(li->login_info) + 1], getSessionKey().c_str(), getSessionKey().length());
+
+			packet.send(mEQNet);
+			queueEvent(mEQNet, EQNET_LOGIN_TO_WORLD);
+			break;
+		}
+		default:
+			// echo session response to the server
+			sendPacket(data, len);
+			break;
 		}
 
 		printf("server CRC key: %i (0x%0.8X)\n", getCRCKey(), getCRCKey());

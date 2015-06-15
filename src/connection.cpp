@@ -16,11 +16,8 @@ void Connection::initiateSession()
 {
 	// send a session request to initiate with the server
 	sendSessionRequest();
-	// wait for response
-	int len = recvWithTimeout(5000);
-	handleProtocol(len);
-	// increase our timeout window from 1.5 seconds to 5 so we don't have to spam quite so much...
-	sendMaxTimeoutLengthRequest();
+	setTimeoutEnabled(true);
+	resetTimeout();
 }
 
 void Connection::pump()
@@ -32,14 +29,17 @@ void Connection::pump()
 		return;
 	}
 
-	int len = recvPacket();
-	if (len <= 0)
-		return;
+	for (;;)
+	{
+		int len = recvPacket();
+		if (len <= 0)
+			return;
 
-	if (!handleProtocol(len))
-		return;
+		if (!handleProtocol(len))
+			continue;
 
-	processPackets();
+		processPackets();
+	}
 }
 
 void Connection::processPackets()
@@ -50,7 +50,7 @@ void Connection::processPackets()
 		mReadPacketQueue.pop();
 
 		uint16_t opcode = *(uint16_t*)packet->data;
-		int offset = 2;
+		uint32_t offset = 2;
 
 		// opcodes with a low-order byte (post-byte order flip) of 0 (e.g. 0x4200 -> 00 42 in memory)
 		// are preceded with an extra 0 byte (e.g. 00 42 -> 00 00 42)
@@ -70,6 +70,7 @@ void Connection::processPackets()
 			processPacketLogin(opcode, data, len);
 			break;
 		case MODE_WORLD:
+		case MODE_CHAR_SELECT:
 			processPacketWorld(opcode, data, len);
 			break;
 		}
@@ -190,10 +191,6 @@ void Connection::processPacketLogin(uint16_t opcode, byte* data, uint32_t len)
 			return;
 		}
 
-		queueEvent(mEQNet, EQNET_LOGIN_TO_WORLD);
-		setTimeoutEnabled(true);
-		resetTimeout();
-
 		Address addr;
 		addr.ip = mEQNet->selectedServer->ip;
 		addr.port = 9000;
@@ -212,22 +209,6 @@ void Connection::processPacketLogin(uint16_t opcode, byte* data, uint32_t len)
 		resetAcks();
 		// init session with world
 		initiateSession();
-
-		setAutoAckEnabled(true);
-
-		// say hello to the world server
-
-		// struct seems to be the same for all client versions
-		Packet packet(sizeof(Titanium::LoginInfo_Struct),
-			translateOpcodeToServer(mEQNet, EQNET_OP_SendLoginInfo), this);
-		Titanium::LoginInfo_Struct* li = (Titanium::LoginInfo_Struct*)packet.getDataBuffer();
-
-		// login_info -> accountID as a string, null terminator, session key
-		memset(li->login_info, 0, 64);
-		itoa(getAccountID(), li->login_info, 10);
-		memcpy(&li->login_info[strlen(li->login_info) + 1], getSessionKey().c_str(), getSessionKey().length());
-
-		packet.send(mEQNet);
 		break;
 	}
 
@@ -245,6 +226,7 @@ void Connection::processPacketWorld(uint16_t opcode, byte* data, uint32_t len)
 	case EQNET_OP_GuildsList:
 	{
 		// this seems to be the same for all client versions
+		/*
 		Titanium::GuildsListEntry_Struct* guilds = (Titanium::GuildsListEntry_Struct*)data;
 
 		if (mEQNet->guildList)
@@ -289,7 +271,8 @@ void Connection::processPacketWorld(uint16_t opcode, byte* data, uint32_t len)
 			++id;
 			++g;
 			pos += sizeof(Titanium::GuildsListEntry_Struct);
-		}
+		}*/
+		readGuilds(mEQNet, data, len);
 
 		break;
 	}
