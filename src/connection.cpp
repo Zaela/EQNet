@@ -23,19 +23,6 @@ void Connection::initiateSession()
 	sendMaxTimeoutLengthRequest();
 }
 
-void Connection::resetTimeout()
-{
-	mTimeoutTimestamp = std::chrono::system_clock::now();
-}
-
-bool Connection::isTimedOut()
-{
-	if (!mTimeOutEnabled)
-		return false;
-	std::chrono::duration<double> diff = std::chrono::system_clock::now() - mTimeoutTimestamp;
-	return diff.count() > 5.0;
-}
-
 void Connection::pump()
 {
 	if (isTimedOut())
@@ -108,7 +95,6 @@ void Connection::processPacketLogin(uint16_t opcode, byte* data, uint32_t len)
 		memcpy(&b[10], mEQNet->credentials, mEQNet->credentialsLen);
 
 		packet.send(mEQNet);
-		resetTimeout();
 		break;
 	}
 
@@ -140,7 +126,6 @@ void Connection::processPacketLogin(uint16_t opcode, byte* data, uint32_t len)
 		b[0] = 4;
 
 		packet.send(mEQNet);
-		resetTimeout();
 		break;
 	}
 
@@ -207,6 +192,7 @@ void Connection::processPacketLogin(uint16_t opcode, byte* data, uint32_t len)
 
 		queueEvent(mEQNet, EQNET_LOGIN_TO_WORLD);
 		setTimeoutEnabled(true);
+		resetTimeout();
 
 		Address addr;
 		addr.ip = mEQNet->selectedServer->ip;
@@ -312,6 +298,7 @@ void Connection::processPacketWorld(uint16_t opcode, byte* data, uint32_t len)
 	{
 		readCharSelectCharacters(mEQNet, data, len);
 
+		setTimeoutEnabled(false);
 		mEQNet->mode = MODE_CHAR_SELECT;
 		queueEvent(mEQNet, EQNET_WORLD_AT_CHAR_SELECT);
 		break;

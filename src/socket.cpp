@@ -97,6 +97,7 @@ int Socket::recvPacket()
 
 	if (i > 0)
 	{
+		resetTimeout();
 		return i;
 	}
 	else if (i == -1)
@@ -169,6 +170,19 @@ void Socket::sendPacket(void* in_data, int len)
 			}
 		}
 	} while (len > 0);
+}
+
+void Socket::resetTimeout()
+{
+	mTimeoutTimestamp = std::chrono::system_clock::now();
+}
+
+bool Socket::isTimedOut()
+{
+	if (!mTimeOutEnabled)
+		return false;
+	std::chrono::duration<double> diff = std::chrono::system_clock::now() - mTimeoutTimestamp;
+	return diff.count() > 5.0;
 }
 
 bool Socket::loadLibrary()

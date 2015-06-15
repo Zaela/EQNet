@@ -24,6 +24,7 @@
 
 #include <cstdint>
 #include <string>
+#include <chrono>
 
 #include "main.h"
 #include "address.h"
@@ -48,6 +49,9 @@ private:
 	std::string mIPAddress;
 	std::string mPort;
 
+	std::chrono::system_clock::time_point mTimeoutTimestamp;
+	bool mTimeOutEnabled;
+
 protected:
 	EQNet* mEQNet;
 
@@ -66,6 +70,10 @@ public:
 	int recvPacket();
 	int recvWithTimeout(uint32_t milliseconds);
 	void sendPacket(void* data, int len);
+
+	void resetTimeout();
+	bool isTimedOut();
+	void setTimeoutEnabled(bool to) { mTimeOutEnabled = to; }
 };
 
 #endif//_EQNET_SOCKET_H_

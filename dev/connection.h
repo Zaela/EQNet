@@ -13,8 +13,6 @@ class Connection : public Receiver
 private:
 	uint32_t mAccountID;
 	std::string mSessionKey;
-	std::chrono::system_clock::time_point mTimeoutTimestamp;
-	bool mTimeOutEnabled;
 
 private:
 	void processPackets();
@@ -30,10 +28,7 @@ public:
 
 	void initiateSession();
 	void pump();
-	void resetTimeout();
-	bool isTimedOut();
 
-	void setTimeoutEnabled(bool to) { mTimeOutEnabled = to; }
 	uint32_t getAccountID() const { return mAccountID; }
 	std::string getSessionKey() const { return mSessionKey; }
 };
