@@ -9,21 +9,21 @@ namespace Titanium
 {
 	static const OpCodeTranslation toCanonical[] = {
 			/* World packets */
-			{ 0x4DD0, EQNET_OP_SendLoginInfo },
+			{ 0x4dd0, EQNET_OP_SendLoginInfo },
 			{ 0x6957, EQNET_OP_GuildsList },
-			{ 0x0FA6, EQNET_OP_LogServer },
-			{ 0x3C25, EQNET_OP_ApproveWorld },
+			{ 0x0fa6, EQNET_OP_LogServer },
+			{ 0x3c25, EQNET_OP_ApproveWorld },
 			{ 0x4513, EQNET_OP_SendCharInfo },
-			{ 0x7CBA, EQNET_OP_EnterWorld },
-			{ 0x52A4, EQNET_OP_PostEnterWorld },
-			{ 0x04EC, EQNET_OP_ExpansionInfo },
+			{ 0x7cba, EQNET_OP_EnterWorld },
+			{ 0x52a4, EQNET_OP_PostEnterWorld },
+			{ 0x04ec, EQNET_OP_ExpansionInfo },
 			/* Char select packets */
 			{ 0x7752, EQNET_OP_AckPacket },
-			{ 0x024D, EQNET_OP_MOTD },
-			{ 0x00D7, EQNET_OP_SetChatServer },
+			{ 0x024d, EQNET_OP_MOTD },
+			{ 0x00d7, EQNET_OP_SetChatServer },
 			{ 0x6536, EQNET_OP_SetChatServer2 },
-			{ 0x407C, EQNET_OP_ZoneUnavailable },
-			{ 0x61B6, EQNET_OP_ZoneServerInfo }
+			{ 0x407c, EQNET_OP_ZoneUnavailable },
+			{ 0x61b6, EQNET_OP_ZoneServerInfo }
 	};
 }
 

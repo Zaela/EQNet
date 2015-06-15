@@ -97,6 +97,10 @@
     <ClInclude Include="dev\network_protocol.h" />
     <ClInclude Include="dev\opcode_eqnet.h" />
     <ClInclude Include="dev\opcode_login.h" />
+    <ClInclude Include="dev\opcode_rof.h" />
+    <ClInclude Include="dev\opcode_rof2.h" />
+    <ClInclude Include="dev\opcode_sod.h" />
+    <ClInclude Include="dev\opcode_sof.h" />
     <ClInclude Include="dev\opcode_titanium.h" />
     <ClInclude Include="dev\opcode_underfoot.h" />
     <ClInclude Include="dev\packet.h" />

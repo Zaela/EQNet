@@ -87,6 +87,18 @@
     <ClInclude Include="dev\world.h">
       <Filter>Header Files</Filter>
     </ClInclude>
+    <ClInclude Include="dev\opcode_sod.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="dev\opcode_sof.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="dev\opcode_rof.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="dev\opcode_rof2.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="src\init.cpp">

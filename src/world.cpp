@@ -79,7 +79,11 @@ void readCharSelectCharacters(EQNet* net, byte* data, uint32_t len)
 		break;
 	}
 
+	case EQNET_CLIENT_SECRETS_OF_FAYDWER:
+	case EQNET_CLIENT_SEEDS_OF_DESTRUCTION:
 	case EQNET_CLIENT_UNDERFOOT:
+	case EQNET_CLIENT_REIGN_OF_FEAR:
+	case EQNET_CLIENT_REIGN_OF_FEAR2:
 	{
 		Underfoot::CharacterSelect_Struct* cs = (Underfoot::CharacterSelect_Struct*)data;
 

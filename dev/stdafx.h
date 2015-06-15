@@ -26,7 +26,11 @@
 #include "opcode_eqnet.h"
 #include "opcode_login.h"
 #include "opcode_titanium.h"
+#include "opcode_sof.h"
+#include "opcode_sod.h"
 #include "opcode_underfoot.h"
+#include "opcode_rof.h"
+#include "opcode_rof2.h"
 
 #include <cstring>
 #include <cstdio>

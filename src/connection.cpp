@@ -206,6 +206,7 @@ void Connection::processPacketLogin(uint16_t opcode, byte* data, uint32_t len)
 		}
 
 		queueEvent(mEQNet, EQNET_LOGIN_TO_WORLD);
+		setTimeoutEnabled(true);
 
 		Address addr;
 		addr.ip = mEQNet->selectedServer->ip;
