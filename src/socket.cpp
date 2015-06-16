@@ -147,9 +147,6 @@ int Socket::recvWithTimeout(uint32_t milliseconds)
 void Socket::sendRaw(void* in_data, int len)
 {
 	char* data = (char*)in_data;
-	//for (int i = 0; i < len; ++i)
-	//	printf("%0.2X ", (byte)data[i]);
-	//printf("\n");
 	int sent;
 	do
 	{
@@ -199,17 +196,24 @@ void Socket::sendPacketFragmented(Packet* p)
 	byte buf[SEND_PACKET_MAX_SIZE];
 	
 	uint16_t* ptr = (uint16_t*)buf;
-	*ptr = OP_Fragment;
+	*ptr = toNetworkShort(OP_Fragment);
 
 	// first chunk
-	ptr[1] = getNextSequence();
+	ptr[1] = toNetworkShort(getNextSequence());
+
+	// stated len is minus all overhead except app opcode
+	uint32_t minus;
+	if (p->hasSequence())
+		minus = 4; // protocol opcode + seq
+	else
+		minus = 2; // protocol opcode
 
 	uint32_t* lenPtr = (uint32_t*)(data + 4);
-	*lenPtr = len;
+	*lenPtr = toNetworkLong(len - minus); 
 
 	uint32_t pos = 0;
 	// copy first 502 bytes
-	memcpy(buf + 8, data, 502);
+	memcpy(buf + 8, data + minus, 502);
 	pos += 502;
 
 	// send
@@ -220,7 +224,7 @@ void Socket::sendPacketFragmented(Packet* p)
 
 	while (pos < len)
 	{
-		ptr[1] = getNextSequence();
+		ptr[1] = toNetworkShort(getNextSequence());
 
 		uint32_t chunkLen = len - pos;
 		if (chunkLen > 506)

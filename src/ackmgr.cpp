@@ -331,12 +331,13 @@ void AckManager::startFragSequence(byte* data, uint16_t seq)
 	mFragStart = seq;
 	mFragMilestone = seq;
 
-	// confirm later - is size exact?
+	// some fragmented packets misreport their size by a byte or two,
+	// so this may fail in obscure circumstances
 
 	//find the expected end seq
-	uint32_t size = toHostLong(*(uint32_t*)(data + 4));
+	uint32_t size = toHostLong(*(uint32_t*)(data + 4)) - 502;
 	//max packet size is 512 - 6 = 506
-	mFragEnd = seq + (size / 506) + 1;
+	mFragEnd = seq + (size / 506) + 2;
 	//if it's an exact multiple we just overshot it by 1
 	if (size % 506 == 0)
 		--mFragEnd;
