@@ -86,6 +86,13 @@ EQNET_API const EQNet_Guild*        EQNet_GetGuildList(EQNet*, int* count);
 EQNET_API const EQNet_Character*    EQNet_GetCharacterList(EQNet*, int* count);
 
 /*
+** Raw I/O
+*/
+
+EQNET_API void EQNet_SendRawPacket(EQNet*, uint16_t opcode, uint8_t* data, uint32_t len);
+EQNET_API void EQNet_SendRawBytes(EQNet*, uint8_t* data, uint32_t len);
+
+/*
 ** Events
 */
 

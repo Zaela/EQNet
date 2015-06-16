@@ -12,17 +12,14 @@
 class AckManager : public Socket
 {
 private:
-	static const uint32_t SEQUENCE_MAX = 65536;
 	static const uint16_t WINDOW_SIZE = 2048;
 
-	uint32_t mCRCKey;
 	uint32_t mSessionID;
 
 	std::chrono::system_clock::time_point mAutoAckTimestamp;
 	bool mAutoAckEnabled;
 
 	//these overflow by design
-	uint16_t mNextSeq;
 	uint16_t mExpectedSeq;
 	uint16_t mLastReceivedAck;
 
@@ -34,7 +31,6 @@ private:
 	uint16_t mFragMilestone;
 
 	ReadPacket* mFuturePackets[SEQUENCE_MAX];
-	Packet* mSentPackets[SEQUENCE_MAX];
 
 protected:
 	std::queue<ReadPacket*> mReadPacketQueue;
@@ -60,10 +56,6 @@ public:
 
 	void checkAutoAck();
 
-	uint16_t getNextSequence() { return ++mNextSeq; }
-
-	void setCRCKey(uint32_t crc) { mCRCKey = crc; }
-	uint32_t getCRCKey() { return mCRCKey; }
 	uint32_t getSessionID() { return mSessionID; }
 
 	void receiveAck(uint16_t seq);
@@ -73,7 +65,6 @@ public:
 	void checkInboundFragment(byte* packet, uint32_t len);
 	void checkFragmentComplete();
 	void checkAfterPacket();
-	void recordSentPacket(const Packet& packet, uint16_t seq);
 	void queueRawPacket(byte* data, uint32_t len);
 	bool resendUnackedPackets();
 	void startFragSequence(byte* data, uint16_t seq);

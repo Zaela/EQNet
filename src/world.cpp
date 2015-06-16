@@ -1,6 +1,14 @@
 
 #include "stdafx.h"
 
+int EQNet_WorldToZone(EQNet* net, EQNet_Character* character)
+{
+	if (net->mode != MODE_CHAR_SELECT)
+		return false;
+
+	return true;
+}
+
 const EQNet_Guild* EQNet_GetGuildList(EQNet* net, int* count)
 {
 	if (count)

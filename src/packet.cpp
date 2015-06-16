@@ -1,32 +1,34 @@
 
 #include "stdafx.h"
 
-Packet::Packet(int data_len, uint16_t opcode, AckManager* ackMgr, int protocol_opcode, bool no_crc, bool compressed)
-	:
+Packet::Packet(uint32_t data_len, uint16_t opcode, bool hasSequence, int protocol_opcode) :
+	mNoDelete(false),
+	mHasSeq(hasSequence),
 	mBuffer(nullptr)
 {
-	uint16_t len = data_len + 8;
+	uint32_t len = data_len + 6;
 	uint8_t dataPos = 6;
-	bool hasCRC = true;
-	if (ackMgr == nullptr)
+	uint8_t opOffset = 0;
+
+	if (!mHasSeq)
 	{
 		len -= 2;
 		dataPos = 4;
 	}
-	if (no_crc)
+
+	// opcodes with a low-order byte of 0 are preceded with an extra 0 byte
+	if (opcode != OP_NONE && (opcode & 0x00ff) == 0)
 	{
-		len -= 2;
-		hasCRC = false;
+		opOffset = 1;
+		++len;
 	}
 
-	byte* buf = new byte[len];
+	byte* buf = new byte[len + 2]; // 2 extra unrecorded bytes to potentially hold a crc
 	memset(buf, 0, len);
 
 	mLen = len;
 	mDataLen = data_len;
 	mDataPos = dataPos;
-	mHasCRC = hasCRC;
-	mCompress = compressed;
 	mBuffer = buf;
 
 	uint16_t* ptr = (uint16_t*)buf;
@@ -34,39 +36,34 @@ Packet::Packet(int data_len, uint16_t opcode, AckManager* ackMgr, int protocol_o
 
 	if (opcode != OP_NONE)
 	{
-		ptr[ackMgr ? 2 : 1] = opcode;
+		ptr[(mHasSeq ? 2 : 1) + opOffset] = opcode;
 	}
 	else
 	{
 		mLen -= 2;
 		mDataPos -= 2;
 	}
-
-	if (ackMgr)
-	{
-		uint16_t seq = toNetworkShort(ackMgr->getNextSequence());
-		ptr[1] = seq;
-		ackMgr->recordSentPacket(*this, seq);
-	}
 }
 
 Packet::Packet() :
-mLen(0),
-mDataLen(0),
-mDataPos(0),
-mHasCRC(false),
-mBuffer(nullptr)
+	mLen(0),
+	mDataLen(0),
+	mSeq(0),
+	mDataPos(0),
+	mNoDelete(false),
+	mBuffer(nullptr)
 {
 
 }
 
 Packet::Packet(const Packet& toCopy) :
-mLen(toCopy.mLen),
-mDataLen(toCopy.mDataLen),
-mDataPos(toCopy.mDataPos),
-mHasCRC(toCopy.mHasCRC)
+	mLen(toCopy.mLen),
+	mDataLen(toCopy.mDataLen),
+	mSeq(toCopy.mSeq),
+	mDataPos(toCopy.mDataPos),
+	mNoDelete(false)
 {
-	mBuffer = new byte[mLen];
+	mBuffer = new byte[mLen + 2];
 	memcpy(mBuffer, toCopy.mBuffer, mLen);
 }
 
@@ -76,44 +73,53 @@ Packet::~Packet()
 		delete[] mBuffer;
 }
 
-void Packet::writeCRC(uint32_t crcKey)
+void Packet::setSequence(uint16_t seq)
 {
-	if (mBuffer == nullptr)
-		return;
-	uint16_t len = mLen - 2;
-	uint16_t* ptr = (uint16_t*)(mBuffer + len);
-	*ptr = CRC::calcOutbound(mBuffer, len, crcKey);
+	mSeq = seq;
+	*(uint16_t*)(mBuffer + 2) = toNetworkShort(seq);
 }
 
-void Packet::send(EQNet* net)
+void Packet::queue(EQNet* net)
 {
-	if (mCompress)
-		compress(net);
-	if (mHasCRC)
-		writeCRC(net->connection->getCRCKey());
-	net->connection->sendPacket(mBuffer, mLen);
+	net->connection->queuePacket(this);
 }
 
-void Packet::compress(EQNet* net)
+////////////////////////////////////////////////////////////////////
+
+CombinedPacket::CombinedPacket() :
+	mPacketCount(0),
+	mLen(2),
+	mFirstPacket(nullptr)
 {
-	// compress everything except the protocol opcode and crc space
-	// I think every compressed packet also has a crc...
-	byte* data = mBuffer + 2;
-	uint32_t len = mLen - 4;
+	uint16_t* ptr = (uint16_t*)mBuffer;
+	*ptr = toNetworkShort(OP_Combined);
+}
 
-	Compression::compressBlock(net, data, len);
+bool CombinedPacket::addPacket(Packet* p)
+{
+	uint32_t len = p->lengthWithOverhead();
 
-	//check results - we add 1 byte for the compression flag
-	if (len > (uint32_t)(mLen - 5))
-	{
-		//compression increased our size, need to realloc buffer
-		uint16_t opcode = *(uint16_t*)mBuffer;
-		delete[] mBuffer;
-		mBuffer = new byte[len + 5];
-		*(uint16_t*)mBuffer = opcode;
-	}
+	if (len > MAX_SINGLE_PACKET_LEN)
+		return false;
 
-	mBuffer[2] = 'Z';
-	memcpy(&mBuffer[3], data, len);
-	mLen = len + 5;
+	uint32_t addLen = mLen + len + 1;
+	if (addLen > MAX_SPACE)
+		return false;
+
+	if (mFirstPacket == nullptr)
+		mFirstPacket = p;
+
+	mBuffer[mLen] = (uint8_t)len;
+	memcpy(&mBuffer[mLen + 1], p->getRawBuffer(), len);
+
+	mLen = addLen;
+	++mPacketCount;
+	return true;
+}
+
+void CombinedPacket::clear()
+{
+	mPacketCount = 0;
+	mLen = 2;
+	mFirstPacket = nullptr;
 }

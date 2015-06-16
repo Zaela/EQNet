@@ -3,17 +3,7 @@
 
 void EQNet_SetLoginServer(EQNet* net, const char* ip, uint16_t port)
 {
-	size_t len = strlen(ip) + 1;
-	char* copyIP = new char[len];
-	memcpy(copyIP, ip, len);
-
-	Address& addr = net->addressLogin;
-
-	if (addr.ip)
-		delete[] addr.ip;
-
-	addr.ip = copyIP;
-	addr.port = port;
+	recordAddress(net->addressLogin, ip, port);
 }
 
 int EQNet_LoginToServerSelect(EQNet* net, const char* username, const char* password)
@@ -61,12 +51,12 @@ int EQNet_LoginToWorld(EQNet* net, EQNet_Server* server)
 	net->selectedServer = copyServer(server);
 
 	// inform the login server of our selection
-	Packet packet(14, OP_PlayEverquestRequest, net->connection, OP_Packet, false, false);
-	Login_PlayRequest* pr = (Login_PlayRequest*)packet.getDataBuffer();
+	Packet* packet = new Packet(14, OP_PlayEverquestRequest);
+	Login_PlayRequest* pr = (Login_PlayRequest*)packet->getDataBuffer();
 	pr->sequence = 5;
 	pr->serverRuntimeID = server->runtimeID;
 
-	packet.send(net);
+	packet->queue(net);
 	return true;
 }
 

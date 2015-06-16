@@ -116,6 +116,7 @@
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="src\ackmgr.cpp" />
+    <ClCompile Include="src\address.cpp" />
     <ClCompile Include="src\compression.cpp" />
     <ClCompile Include="src\connection.cpp" />
     <ClCompile Include="src\crc.cpp" />
@@ -125,6 +126,7 @@
     <ClCompile Include="src\login.cpp" />
     <ClCompile Include="src\opcode_eqnet.cpp" />
     <ClCompile Include="src\packet.cpp" />
+    <ClCompile Include="src\raw_io.cpp" />
     <ClCompile Include="src\receiver.cpp" />
     <ClCompile Include="src\socket.cpp" />
     <ClCompile Include="src\stdafx.cpp">

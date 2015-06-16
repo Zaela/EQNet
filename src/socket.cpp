@@ -3,7 +3,8 @@
 
 Socket::Socket(EQNet* net) :
 	mSocket(INVALID_SOCKET),
-	mEQNet(net)
+	mEQNet(net),
+	mNextSeq(65535)
 {
 
 }
@@ -11,6 +12,12 @@ Socket::Socket(EQNet* net) :
 Socket::~Socket()
 {
 	disconnect();
+
+	for (Packet* p : mSendQueue)
+	{
+		if (!p->isNoDelete())
+			delete p;
+	}
 }
 
 void Socket::setAddress(Address& addr)
@@ -137,9 +144,12 @@ int Socket::recvWithTimeout(uint32_t milliseconds)
 	return 0;
 }
 
-void Socket::sendPacket(void* in_data, int len)
+void Socket::sendRaw(void* in_data, int len)
 {
 	char* data = (char*)in_data;
+	//for (int i = 0; i < len; ++i)
+	//	printf("%0.2X ", (byte)data[i]);
+	//printf("\n");
 	int sent;
 	do
 	{
@@ -170,6 +180,190 @@ void Socket::sendPacket(void* in_data, int len)
 			}
 		}
 	} while (len > 0);
+}
+
+void Socket::queuePacket(Packet* packet)
+{
+	mSendQueue.push_back(packet);
+}
+
+void Socket::sendPacketFragmented(Packet* p)
+{
+	// fragment packets:
+	// first chunk - proto op, seq, 32-bit length, 502 bytes of data, 2 byte crc
+	// subsequent - proto op, seq, 506 bytes of data, 2 byte crc
+
+	byte* data = p->getDataBuffer();
+	uint32_t len = p->length();
+
+	byte buf[SEND_PACKET_MAX_SIZE];
+	
+	uint16_t* ptr = (uint16_t*)buf;
+	*ptr = OP_Fragment;
+
+	// first chunk
+	ptr[1] = getNextSequence();
+
+	uint32_t* lenPtr = (uint32_t*)(data + 4);
+	*lenPtr = len;
+
+	uint32_t pos = 0;
+	// copy first 502 bytes
+	memcpy(buf + 8, data, 502);
+	pos += 502;
+
+	// send
+	sendPacket(buf, SEND_PACKET_MAX_SIZE_BEFORE_CRC);
+
+	// subsequent chunks
+	byte* bufWrite = buf + 4;
+
+	while (pos < len)
+	{
+		ptr[1] = getNextSequence();
+
+		uint32_t chunkLen = len - pos;
+		if (chunkLen > 506)
+			chunkLen = 506;
+
+		memcpy(bufWrite, data + pos, chunkLen);
+
+		sendPacket(buf, chunkLen + 4);
+		pos += chunkLen;
+	}
+}
+
+void Socket::sendPacket(byte* data, uint32_t len)
+{
+	byte buf[SEND_PACKET_MAX_SIZE];
+
+	if (mEQNet->mode >= MODE_ZONE)
+	{
+		// protocol opcode
+		uint16_t* ptr = (uint16_t*)buf;
+		*ptr = *(uint16_t*)data;
+
+		if (len <= SEND_PACKET_NO_COMPRESSION_THRESHOLD)
+		{
+			// not worth compressing, but we need to add the 'not compressed' flag
+			// protocol opcode + 0xa5 + everything else
+
+			// not compressed flag
+			buf[2] = 0xa5;
+
+			// everything else
+			memcpy(buf + 3, data + 2, len - 2);
+
+			++len; // add compressed flag
+		}
+		else
+		{
+			// do compression
+			// protocol opcode + 'Z' + compressed everything else
+
+			// compressed flag
+			buf[2] = 'Z';
+
+			// everythign else, compressed
+			len -= 2;
+			data += 2;
+			Compression::compressBlock(mEQNet, data, len);
+			memcpy(buf + 3, data, len);
+
+			len += 3; // add protocol opcode back, plus compressed flag
+		}
+
+		data = buf;
+	}
+
+	// write crc
+	// all packets are allocated with 2 extra bytes at the end to hold the CRC
+	uint16_t* crc = (uint16_t*)(data + len);
+	*crc = CRC::calcOutbound(data, len, getCRCKey());
+
+	// send
+	sendRaw(data, len + 2);
+}
+
+void Socket::sendPacket(Packet* p)
+{
+	sendPacket(p->getRawBuffer(), p->lengthWithOverhead());
+}
+
+void Socket::sendPacket(CombinedPacket& comb)
+{
+	uint16_t num = comb.getPacketCount();
+	if (num == 0)
+		return;
+
+	if (num == 1)
+		sendPacket(comb.getFirstPacket());
+	else
+		sendPacket(comb.getBuffer(), comb.length());
+
+	comb.clear();
+}
+
+void Socket::processSendQueue()
+{
+	if (mSendQueue.empty())
+		return;
+
+	Packet* p;
+	uint32_t numPackets = mSendQueue.size();
+
+	if (numPackets == 1)
+	{
+		p = mSendQueue[0];
+		sendPacket(p);
+		if (!p->isNoDelete())
+			delete p;
+		mSendQueue.clear();
+		return;
+	}
+
+	CombinedPacket comb;
+
+	for (uint32_t i = 0; i < numPackets; ++i)
+	{
+		p = mSendQueue[i];
+		uint16_t len = p->lengthWithOverhead();
+
+		if (len > SEND_PACKET_MAX_SIZE_BEFORE_CRC)
+		{
+			sendPacket(comb);
+			sendPacketFragmented(p);
+			continue;
+		}
+
+		if (p->hasSequence())
+		{
+			p->setSequence(getNextSequence());
+			recordSentPacket(*p);
+		}
+
+		if (!comb.addPacket(p))
+		{
+			sendPacket(comb);
+			sendPacket(p);
+		}
+	}
+
+	sendPacket(comb);
+
+	for (Packet* p : mSendQueue)
+	{
+		if (!p->isNoDelete())
+			delete p;
+	}
+
+	mSendQueue.clear();
+}
+
+void Socket::recordSentPacket(const Packet& packet)
+{
+	//copy constructor
+	mSentPackets[packet.getSequence()] = new Packet(packet);
 }
 
 void Socket::resetTimeout()

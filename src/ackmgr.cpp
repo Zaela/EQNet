@@ -4,7 +4,6 @@
 AckManager::AckManager(EQNet* net) :
 	Socket(net),
 	mAutoAckEnabled(false),
-	mNextSeq(65535),
 	mExpectedSeq(0),
 	mLastReceivedAck(65535),
 	mBuildingFrag(false),
@@ -16,7 +15,7 @@ AckManager::AckManager(EQNet* net) :
 
 void AckManager::resetAcks()
 {
-	mNextSeq = 65535;
+	resetSequence();
 	mExpectedSeq = 0;
 	mLastReceivedAck = 65535;
 	mBuildingFrag = false;
@@ -67,7 +66,7 @@ void AckManager::receiveAck(uint16_t seq)
 void AckManager::sendAck(uint16_t seq)
 {
 	mEQNet->ackPacket->setSequence(seq);
-	mEQNet->ackPacket->send(mEQNet);
+	mEQNet->ackPacket->queue(mEQNet);
 	mAutoAckTimestamp = std::chrono::system_clock::now();
 }
 
@@ -188,28 +187,12 @@ void AckManager::checkFragmentComplete()
 	ReadPacket* out = new ReadPacket(nullptr, len);
 
 	//copy first piece
-	/*
-	ReadPacket* first = mFuturePackets[mFragStart];
-	mFuturePackets[mFragStart] = nullptr;
-	uint32 copy_len = first->len - 8;
-	memcpy(out->data, first->data + 8, copy_len);
-	delete first;
-	uint32 pos = copy_len;
-	*/
 	uint32_t pos = copyFragment(out, 0, mFragStart, 8);
 
 	//copy subsequence pieces
 	i = mFragStart + 1;
 	while (i != mFragEnd)
 	{
-		/*
-		ReadPacket* sub = mFuturePackets[i];
-		mFuturePackets[i] = nullptr;
-		copy_len = sub->len - 4;
-		memcpy(out->data + pos, sub->data + 4, copy_len);
-		delete sub;
-		pos += copy_len;
-		*/
 		pos += copyFragment(out, pos, i);
 		++i;
 	}
@@ -261,12 +244,6 @@ void AckManager::checkAfterPacket()
 	}
 }
 
-void AckManager::recordSentPacket(const Packet& packet, uint16_t seq)
-{
-	//copy constructor
-	mSentPackets[seq] = new Packet(packet);
-}
-
 void AckManager::sendSessionRequest()
 {
 	mSessionID = (uint32_t)this;//gRNG();
@@ -277,17 +254,24 @@ void AckManager::sendSessionRequest()
 	sr.sessionID = toNetworkLong(mSessionID);
 	sr.maxLength = toNetworkLong(512);
 
-	sendPacket(&sr, sizeof(SessionRequest));
+	sendRaw(&sr, sizeof(SessionRequest));
 }
 
 void AckManager::sendSessionDisconnect()
 {
-	Packet packet(4, OP_NONE, nullptr, OP_SessionDisconnect, false, false);
-	uint32_t* id = (uint32_t*)packet.getDataBuffer();
+	struct SessionDisconnect
+	{
+		uint16_t opcode;
+		uint32_t sessionID;
+		uint16_t crc;
+	};
 
-	*id = toNetworkLong(mSessionID);
+	SessionDisconnect sd;
 
-	packet.send(mEQNet);
+	sd.opcode = toNetworkShort(OP_SessionDisconnect);
+	sd.sessionID = toNetworkLong(mSessionID);
+
+	sendPacket((byte*)&sd, 6); // don't count crc
 }
 
 void AckManager::sendMaxTimeoutLengthRequest()
@@ -300,7 +284,7 @@ void AckManager::sendMaxTimeoutLengthRequest()
 	//while this one decreases the amount of time the server waits between sending us strings of queued packets
 	ss.average_delta = toNetworkLong(25);
 
-	sendPacket(&ss, sizeof(SessionStat));
+	sendRaw(&ss, sizeof(SessionStat));
 }
 
 void AckManager::queueRawPacket(byte* packet, uint32_t len)
@@ -328,7 +312,7 @@ bool AckManager::resendUnackedPackets()
 	{
 		if (mSentPackets[i])
 		{
-			mSentPackets[i]->send(mEQNet);
+			mSentPackets[i]->queue(mEQNet);
 			++count;
 		}
 		else
@@ -346,6 +330,8 @@ void AckManager::startFragSequence(byte* data, uint16_t seq)
 	mBuildingFrag = true;
 	mFragStart = seq;
 	mFragMilestone = seq;
+
+	// confirm later - is size exact?
 
 	//find the expected end seq
 	uint32_t size = toHostLong(*(uint32_t*)(data + 4));

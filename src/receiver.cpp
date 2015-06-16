@@ -41,39 +41,39 @@ void Receiver::readPacket(byte* data, uint32_t len, bool fromCombined)
 		case MODE_LOGIN:
 		{
 			// send session ready packet
-			Packet packet(12, OP_SessionReady, this, OP_Packet, false, false);
-			byte* b = packet.getDataBuffer();
+			Packet* packet = new Packet(12, OP_SessionReady);
+			byte* b = packet->getDataBuffer();
 			b[0] = 2;
 			b[10] = 8;
 
-			packet.send(mEQNet);
+			packet->queue(mEQNet);
 			break;
 		}
 		case MODE_WORLD:
 		{
 			// echo session response to the server
-			sendPacket(data, len);
+			sendRaw(data, len);
 
 			// say hello to the world server
 			setAutoAckEnabled(true);
 
 			// struct seems to be the same for all client versions
-			Packet packet(sizeof(Titanium::LoginInfo_Struct),
-				translateOpcodeToServer(mEQNet, EQNET_OP_SendLoginInfo), this);
-			Titanium::LoginInfo_Struct* li = (Titanium::LoginInfo_Struct*)packet.getDataBuffer();
+			Packet* packet = new Packet(sizeof(Titanium::LoginInfo_Struct),
+				translateOpcodeToServer(mEQNet, EQNET_OP_SendLoginInfo));
+			Titanium::LoginInfo_Struct* li = (Titanium::LoginInfo_Struct*)packet->getDataBuffer();
 
 			// login_info -> accountID as a string, null terminator, session key
 			memset(li->login_info, 0, 64);
 			itoa(getAccountID(), li->login_info, 10);
 			memcpy(&li->login_info[strlen(li->login_info) + 1], getSessionKey().c_str(), getSessionKey().length());
 
-			packet.send(mEQNet);
+			packet->queue(mEQNet);
 			queueEvent(mEQNet, EQNET_LOGIN_TO_WORLD);
 			break;
 		}
 		default:
 			// echo session response to the server
-			sendPacket(data, len);
+			sendRaw(data, len);
 			break;
 		}
 
@@ -154,8 +154,7 @@ bool Receiver::validatePacket(byte*& packet, uint32_t& len, uint32_t& offset, bo
 		return false;
 
 	// attempt to decompress
-	// if not unencrypted flag
-	if (packet[2] == 0x5A) // compressed
+	if (packet[2] == 0x5a) // compressed
 	{
 		if (!Compression::decompressPacket(mEQNet, packet, len))
 		{
@@ -163,7 +162,7 @@ bool Receiver::validatePacket(byte*& packet, uint32_t& len, uint32_t& offset, bo
 			return true;
 		}
 	}
-	else if (packet[2] == 0xA5) // Not compressed, single byte flag
+	else if (packet[2] == 0xa5) // Not compressed, single byte flag
 	{
 		offset = 3;
 		return true;

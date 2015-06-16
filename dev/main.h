@@ -36,9 +36,6 @@ struct EQNet
 	Packet* ackPacket;
 	Connection* connection;
 
-	/* Compression */
-	byte compressBuffer[EQNET_COMPRESSION_BUFFER_LEN];
-
 	/* Login */
 	byte* credentials;
 	size_t credentialsLen;
@@ -53,6 +50,10 @@ struct EQNet
 	int charListCount;
 	EQNet_Character* charList;
 	const char* serverShortName;
+	Address addressWorld;
+
+	/* Compression */
+	byte compressBuffer[EQNET_COMPRESSION_BUFFER_LEN];
 
 	/* Error */
 	char errMsg[EQNET_MAX_ERR_LEN];

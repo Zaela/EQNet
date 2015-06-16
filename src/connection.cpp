@@ -26,20 +26,21 @@ void Connection::pump()
 	{
 		queueEvent(mEQNet, EQNET_TIMEOUT);
 		resetTimeout();
-		return;
 	}
 
 	for (;;)
 	{
 		int len = recvPacket();
 		if (len <= 0)
-			return;
+			break;
 
 		if (!handleProtocol(len))
 			continue;
 
 		processPackets();
 	}
+
+	processSendQueue();
 }
 
 void Connection::processPackets()
@@ -52,7 +53,7 @@ void Connection::processPackets()
 		uint16_t opcode = *(uint16_t*)packet->data;
 		uint32_t offset = 2;
 
-		// opcodes with a low-order byte (post-byte order flip) of 0 (e.g. 0x4200 -> 00 42 in memory)
+		// opcodes with a low-order byte of 0 (e.g. 0x4200 -> 00 42 in memory)
 		// are preceded with an extra 0 byte (e.g. 00 42 -> 00 00 42)
 		if (opcode == 0)
 		{
@@ -89,13 +90,13 @@ void Connection::processPacketLogin(uint16_t opcode, byte* data, uint32_t len)
 		// we receive this to signal that the server's ready to
 		// receive login credentials, for whatever reason
 
-		Packet packet(10 + mEQNet->credentialsLen, OP_Login, this, OP_Packet, false, false);
-		byte* b = packet.getDataBuffer();
+		Packet* packet = new Packet(10 + mEQNet->credentialsLen, OP_Login);
+		byte* b = packet->getDataBuffer();
 		b[0] = 3;
 		b[5] = 2;
 		memcpy(&b[10], mEQNet->credentials, mEQNet->credentialsLen);
 
-		packet.send(mEQNet);
+		packet->queue(mEQNet);
 		break;
 	}
 
@@ -122,11 +123,11 @@ void Connection::processPacketLogin(uint16_t opcode, byte* data, uint32_t len)
 		EQNet_Free(decrypted);
 
 		//send login server list request
-		Packet packet(10, OP_ServerListRequest, this, OP_Packet, false, false);
-		byte* b = packet.getDataBuffer();
+		Packet* packet = new Packet(10, OP_ServerListRequest);
+		byte* b = packet->getDataBuffer();
 		b[0] = 4;
 
-		packet.send(mEQNet);
+		packet->queue(mEQNet);
 		break;
 	}
 
@@ -191,11 +192,14 @@ void Connection::processPacketLogin(uint16_t opcode, byte* data, uint32_t len)
 			return;
 		}
 
+		printf("PlayEverquestResponse\n");
+
 		Address addr;
 		addr.ip = mEQNet->selectedServer->ip;
 		addr.port = 9000;
 
 		setAddress(addr);
+		recordAddress(mEQNet->addressWorld, addr);
 		
 		freeServerList(mEQNet);
 		sendSessionDisconnect();

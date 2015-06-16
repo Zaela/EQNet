@@ -28,7 +28,8 @@ EQNet* EQNet_Create()
 	net->eventQueue = new EQNet_Event[EQNET_EVENT_QUEUE_DEFAULT_LEN];
 	net->eventQueueCap = EQNET_EVENT_QUEUE_DEFAULT_LEN;
 
-	net->ackPacket = new Packet(2, OP_NONE, nullptr, OP_Ack, false, false);
+	net->ackPacket = new Packet(2, OP_NONE, false, OP_Ack);
+	net->ackPacket->setNoDelete();
 	net->connection = new Connection(net);
 
 	EQNet_SetLoginServer(net, "login.eqemulator.net", 5998);
@@ -54,6 +55,8 @@ void EQNet_Destroy(EQNet* net)
 		freeServer(net->selectedServer);
 		delete net->selectedServer;
 	}
+	if (net->addressWorld.ip)
+		delete[] net->addressWorld.ip;
 
 	freeServerList(net);
 
