@@ -14,6 +14,9 @@ private:
 	void processPackets();
 	void processPacketLogin(uint16_t opcode, byte* data, uint32_t len);
 	void processPacketWorld(uint16_t opcode, byte* data, uint32_t len);
+	void processPacketZone(uint16_t opcode, byte* data, uint32_t len);
+
+	void sessionHandoff(Address& addr);
 
 public:
 	Connection(EQNet* net);

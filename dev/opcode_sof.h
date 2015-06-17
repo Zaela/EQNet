@@ -19,11 +19,13 @@ namespace SoF
 			{ 0x0a1b, EQNET_OP_ExpansionInfo },
 			/* Char select packets */
 			{ 0x4d38, EQNET_OP_AckPacket },
-			{ 0x5711, EQNET_OP_MOTD },
+			{ 0x5711, EQNET_OP_MessageOfTheDay },
 			{ 0x71b8, EQNET_OP_SetChatServer },
 			{ 0x32cc, EQNET_OP_SetChatServer2 },
 			{ 0x07a2, EQNET_OP_ZoneUnavailable },
-			{ 0x18b1, EQNET_OP_ZoneServerInfo }
+			{ 0x18b1, EQNET_OP_ZoneServerInfo },
+			/* Zone packets */
+			{ 0x737e, EQNET_OP_ZoneEntry }
 	};
 }
 

@@ -19,11 +19,13 @@ namespace Titanium
 			{ 0x04ec, EQNET_OP_ExpansionInfo },
 			/* Char select packets */
 			{ 0x7752, EQNET_OP_AckPacket },
-			{ 0x024d, EQNET_OP_MOTD },
+			{ 0x024d, EQNET_OP_MessageOfTheDay },
 			{ 0x00d7, EQNET_OP_SetChatServer },
 			{ 0x6536, EQNET_OP_SetChatServer2 },
 			{ 0x407c, EQNET_OP_ZoneUnavailable },
-			{ 0x61b6, EQNET_OP_ZoneServerInfo }
+			{ 0x61b6, EQNET_OP_ZoneServerInfo },
+			/* Zone packets */
+			{ 0x7213, EQNET_OP_ZoneEntry }
 	};
 }
 

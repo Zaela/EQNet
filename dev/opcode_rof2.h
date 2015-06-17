@@ -19,11 +19,13 @@ namespace RoF2
 			{ 0x590d, EQNET_OP_ExpansionInfo },
 			/* Char select packets */
 			{ 0x471d, EQNET_OP_AckPacket },
-			{ 0x0c22, EQNET_OP_MOTD },
+			{ 0x0c22, EQNET_OP_MessageOfTheDay },
 			{ 0x1bc5, EQNET_OP_SetChatServer },
 			{ 0x7eec, EQNET_OP_SetChatServer2 },
 			{ 0x4cb4, EQNET_OP_ZoneUnavailable },
-			{ 0x4c44, EQNET_OP_ZoneServerInfo }
+			{ 0x4c44, EQNET_OP_ZoneServerInfo },
+			/* Zone packets */
+			{ 0x5089, EQNET_OP_ZoneEntry }
 	};
 }
 

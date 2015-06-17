@@ -23,14 +23,18 @@ enum Unexposed_OpCodes
 	EQNET_OP_PostEnterWorld,
 	EQNET_OP_ExpansionInfo,
 	EQNET_OP_AckPacket,
-	EQNET_OP_MOTD,
 	EQNET_OP_SetChatServer,
 	EQNET_OP_SetChatServer2,
 	EQNET_OP_ZoneUnavailable,
-	EQNET_OP_ZoneServerInfo
+	EQNET_OP_ZoneServerInfo,
+	EQNET_OP_ZoneEntry,
+	EQNET_OP_INTERNAL_MAX_COUNT
 };
 
 uint16_t translateOpcodeFromServer(EQNet*, uint16_t opcode);
 uint16_t translateOpcodeToServer(EQNet*, uint16_t opcode);
+void initNoDeleteOpcodes();
+uint32_t isNoDeleteOpcode(uint16_t opcode);
+void checkSpecialDestructor(EQNet_Packet& packet);
 
 #endif//_EQNET_OPCODE_EQNET_H_

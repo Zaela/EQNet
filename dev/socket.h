@@ -78,6 +78,7 @@ private:
 	void sendPacket(Packet* packet);
 	void sendPacket(CombinedPacket& comb);
 	void recordSentPacket(const Packet& packet);
+	void processSinglePacketQueue();
 
 	uint16_t getNextSequence() { return ++mNextSeq; }
 
@@ -94,8 +95,7 @@ public:
 	void disconnect();
 	byte* getBuffer() { return mRecvBuf; }
 	int recvPacket();
-	int recvWithTimeout(uint32_t milliseconds);
-	void sendRaw(void* data, int len);
+	void sendRaw(const void* data, int len);
 
 	void queuePacket(Packet* packet);
 	void processSendQueue();

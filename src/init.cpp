@@ -3,6 +3,8 @@
 
 int EQNet_Init()
 {
+	initNoDeleteOpcodes();
+	initZonePacketHandlers();
 #ifdef _WIN32
 	return Socket::loadLibrary();
 #else
@@ -12,6 +14,7 @@ int EQNet_Init()
 
 void EQNet_Close()
 {
+	deinitZonePacketHandlers();
 #ifdef _WIN32
 	Socket::closeLibrary();
 #endif
@@ -23,16 +26,19 @@ EQNet* EQNet_Create()
 	memset(net, 0, sizeof(EQNet));
 
 	net->mode = MODE_LOGIN;
-	net->clientVersion = EQNET_CLIENT_TITANIUM;
+	net->clientVersion = EQNET_DEFAULT_CLIENT_VERSION;
 	
 	net->eventQueue = new EQNet_Event[EQNET_EVENT_QUEUE_DEFAULT_LEN];
+	memset(net->eventQueue, 0, sizeof(EQNet_Event) * EQNET_EVENT_QUEUE_DEFAULT_LEN);
 	net->eventQueueCap = EQNET_EVENT_QUEUE_DEFAULT_LEN;
+
+	net->translateZonePackets = true;
 
 	net->ackPacket = new Packet(2, OP_NONE, false, OP_Ack);
 	net->ackPacket->setNoDelete();
 	net->connection = new Connection(net);
 
-	EQNet_SetLoginServer(net, "login.eqemulator.net", 5998);
+	EQNet_SetLoginServer(net, EQNET_DEFAULT_LOGIN_IP, EQNET_DEFAULT_LOGIN_PORT);
 
 	return net;
 }
@@ -47,16 +53,26 @@ void EQNet_Destroy(EQNet* net)
 		delete net->connection;
 	if (net->credentials)
 		EQNet_Free(net->credentials);
+
+	if (net->addressZone.ip)
+		delete[] net->addressZone.ip;
 	if (net->addressLogin.ip)
 		delete[] net->addressLogin.ip;
+	if (net->addressWorld.ip)
+		delete[] net->addressWorld.ip;
+
+	if (net->guildList)
+		delete[] net->guildList;
+	if (net->charList)
+		delete[] net->charList;
+	if (net->serverShortName)
+		delete[] net->serverShortName;
 
 	if (net->selectedServer)
 	{
 		freeServer(net->selectedServer);
 		delete net->selectedServer;
 	}
-	if (net->addressWorld.ip)
-		delete[] net->addressWorld.ip;
 
 	freeServerList(net);
 
@@ -65,7 +81,7 @@ void EQNet_Destroy(EQNet* net)
 
 void EQNet_SetClientVersion(EQNet* net, EQNet_ClientVersion version)
 {
-	if (net->mode >= MODE_WORLD)
+	if (net->mode >= MODE_LOGIN_TO_WORLD)
 		return;
 	net->clientVersion = version;
 }

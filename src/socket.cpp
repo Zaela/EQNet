@@ -112,45 +112,26 @@ int Socket::recvPacket()
 		int err;
 #ifdef _WIN32
 		err = WSAGetLastError();
-		if (err == WSAEWOULDBLOCK)
+		if (err != WSAEWOULDBLOCK)
 #else
 		err = errno;
-		if (err == EWOULDBLOCK)
+		if (err != EWOULDBLOCK)
 #endif
 		{
-			return i;
-		}
-		else
-		{
 			setFatalErrorMessageFormat(mEQNet, "recvPacket: error %i", err);
-			return -1;
 		}
 	}
 
 	return -1;
 }
 
-int Socket::recvWithTimeout(uint32_t milliseconds)
+void Socket::sendRaw(const void* in_data, int len)
 {
-	uint32_t cycles = milliseconds / 20;
-	for (uint32_t i = 0; i < cycles; ++i)
-	{
-		int len = recvPacket();
-		if (len > 0)
-			return len;
+	const char* data = (const char*)in_data;
 
-		std::this_thread::sleep_for(std::chrono::milliseconds(20));
-	}
-	return 0;
-}
-
-void Socket::sendRaw(void* in_data, int len)
-{
-	char* data = (char*)in_data;
-	int sent;
 	do
 	{
-		sent = send(mSocket, data, len, 0);
+		int sent = send(mSocket, data, len, 0);
 
 		if (sent > 0)
 		{
@@ -162,15 +143,11 @@ void Socket::sendRaw(void* in_data, int len)
 			int err;
 #ifdef _WIN32
 			err = WSAGetLastError();
-			if (err == WSAEWOULDBLOCK)
+			if (err != WSAEWOULDBLOCK)
 #else
 			err = errno;
-			if (err == EWOULDBLOCK)
+			if (err != EWOULDBLOCK)
 #endif
-			{
-				continue;
-			}
-			else
 			{
 				setFatalErrorMessageFormat(mEQNet, "sendPacket: error %i", err);
 				return;
@@ -241,7 +218,7 @@ void Socket::sendPacket(byte* data, uint32_t len)
 {
 	byte buf[SEND_PACKET_MAX_SIZE];
 
-	if (mEQNet->mode >= MODE_ZONE)
+	if (mEQNet->mode >= MODE_WORLD_TO_ZONE)
 	{
 		// protocol opcode
 		uint16_t* ptr = (uint16_t*)buf;
@@ -308,21 +285,33 @@ void Socket::sendPacket(CombinedPacket& comb)
 	comb.clear();
 }
 
+void Socket::processSinglePacketQueue()
+{
+	Packet* p = mSendQueue[0];
+
+	if (p->hasSequence())
+	{
+		p->setSequence(getNextSequence());
+		recordSentPacket(*p);
+	}
+
+	sendPacket(p);
+
+	if (!p->isNoDelete())
+		delete p;
+	mSendQueue.clear();
+}
+
 void Socket::processSendQueue()
 {
-	if (mSendQueue.empty())
-		return;
-
-	Packet* p;
 	uint32_t numPackets = mSendQueue.size();
+
+	if (numPackets == 0)
+		return;
 
 	if (numPackets == 1)
 	{
-		p = mSendQueue[0];
-		sendPacket(p);
-		if (!p->isNoDelete())
-			delete p;
-		mSendQueue.clear();
+		processSinglePacketQueue();
 		return;
 	}
 
@@ -330,7 +319,7 @@ void Socket::processSendQueue()
 
 	for (uint32_t i = 0; i < numPackets; ++i)
 	{
-		p = mSendQueue[i];
+		Packet* p = mSendQueue[i];
 		uint16_t len = p->lengthWithOverhead();
 
 		if (len > SEND_PACKET_MAX_SIZE_BEFORE_CRC)

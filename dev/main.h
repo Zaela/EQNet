@@ -10,15 +10,19 @@
 #include <cstdint>
 #include <vector>
 
+#define EQNET_DEFAULT_LOGIN_IP "login.eqemulator.net"
+#define EQNET_DEFAULT_LOGIN_PORT 5998
+#define EQNET_DEFAULT_CLIENT_VERSION EQNET_CLIENT_TITANIUM
+
 typedef uint8_t byte;
 
 enum EQNet_Mode
 {
 	MODE_LOGIN,
 	MODE_SERVER_SELECT,
-	MODE_WORLD,
+	MODE_LOGIN_TO_WORLD,
 	MODE_CHAR_SELECT,
-	MODE_ZONE
+	MODE_WORLD_TO_ZONE
 };
 
 struct EQNet
@@ -35,6 +39,11 @@ struct EQNet
 	/* Network IO */
 	Packet* ackPacket;
 	Connection* connection;
+
+	/* Zone */
+	bool translateZonePackets;
+	EQNet_Character* selectedCharacter;
+	Address addressZone;
 
 	/* Login */
 	byte* credentials;

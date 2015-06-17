@@ -35,6 +35,9 @@ public:
 	void setSequence(uint16_t seq);
 	uint16_t getSequence() const { return mSeq; }
 
+	uint16_t getProtocolOpcode();
+	uint16_t getOpcode();
+
 	bool isNoDelete() { return mNoDelete; }
 	void setNoDelete() { mNoDelete = true; }
 };

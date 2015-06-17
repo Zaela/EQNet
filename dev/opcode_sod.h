@@ -19,11 +19,13 @@ namespace SoD
 			{ 0x7519, EQNET_OP_ExpansionInfo },
 			/* Char select packets */
 			{ 0x3594, EQNET_OP_AckPacket },
-			{ 0x192e, EQNET_OP_MOTD },
+			{ 0x192e, EQNET_OP_MessageOfTheDay },
 			{ 0x7f2b, EQNET_OP_SetChatServer },
 			{ 0x11f3, EQNET_OP_SetChatServer2 },
 			{ 0x7930, EQNET_OP_ZoneUnavailable },
-			{ 0x5da4, EQNET_OP_ZoneServerInfo }
+			{ 0x5da4, EQNET_OP_ZoneServerInfo },
+			/* Zone packets */
+			{ 0x5a6b, EQNET_OP_ZoneEntry }
 	};
 }
 

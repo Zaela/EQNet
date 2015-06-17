@@ -10,8 +10,8 @@ namespace Util
 		while (count < boundLen)
 		{
 			++count;
-			*dst++ = *src++;
-			if (*src == 0)
+			*dst++ = *src;
+			if (*src++ == 0)
 				return;
 		}
 		dst[boundLen] = 0;

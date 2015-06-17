@@ -84,6 +84,17 @@ void Packet::queue(EQNet* net)
 	net->connection->queuePacket(this);
 }
 
+// for debug messages
+uint16_t Packet::getProtocolOpcode()
+{
+	return toHostShort(*(uint16_t*)getRawBuffer());
+}
+
+uint16_t Packet::getOpcode()
+{
+	return *(uint16_t*)(getDataBuffer() - 2);
+}
+
 ////////////////////////////////////////////////////////////////////
 
 CombinedPacket::CombinedPacket() :

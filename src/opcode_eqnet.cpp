@@ -76,3 +76,43 @@ uint16_t translateOpcodeToServer(EQNet* net, uint16_t opcodeIn)
 
 	return EQNET_OP_NONE;
 }
+
+// some packets reuse the native representation as the "translated" representation
+// these must not be deleted
+
+// use 1 bit per opcode for fast lookups and low space usage
+#define NO_DELETE_LEN (EQNET_OP_INTERNAL_MAX_COUNT / 32 + 1)
+
+static uint32_t noDeleteOpcodes[NO_DELETE_LEN];
+
+#define OpIndex(op) (op / 32)
+#define OpBit(op) ((uint32_t)(1 << (op % 32)))
+#define OpName(op) EQNET_OP_##op
+#define SET(op) noDeleteOpcodes[OpIndex(OpName(op))] |= OpBit(OpName(op))
+
+void initNoDeleteOpcodes()
+{
+	memset(noDeleteOpcodes, 0, sizeof(uint32_t) * NO_DELETE_LEN);
+
+	SET(Despawn);
+	SET(MessageOfTheDay);
+	SET(TimeUpdate);
+}
+
+uint32_t isNoDeleteOpcode(uint16_t opcode)
+{
+	return noDeleteOpcodes[OpIndex(opcode)] & OpBit(opcode);
+}
+
+#undef NO_DELETE_LEN
+#undef OpIndex
+#undef OpBit
+#undef set
+
+void checkSpecialDestructor(EQNet_Packet& p)
+{
+	switch (p.opcode)
+	{
+
+	}
+}

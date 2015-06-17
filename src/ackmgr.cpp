@@ -6,8 +6,7 @@ AckManager::AckManager(EQNet* net) :
 	mAutoAckEnabled(false),
 	mExpectedSeq(0),
 	mLastReceivedAck(65535),
-	mBuildingFrag(false),
-	mFragEndReceived(false)
+	mBuildingFrag(false)
 {
 	memset(mFuturePackets, 0, sizeof(ReadPacket*) * SEQUENCE_MAX);
 	memset(mSentPackets, 0, sizeof(Packet*) * SEQUENCE_MAX);
@@ -19,7 +18,6 @@ void AckManager::resetAcks()
 	mExpectedSeq = 0;
 	mLastReceivedAck = 65535;
 	mBuildingFrag = false;
-	mFragEndReceived = false;
 
 	for (uint32_t i = 0; i < SEQUENCE_MAX; ++i)
 	{
@@ -70,6 +68,13 @@ void AckManager::sendAck(uint16_t seq)
 	mAutoAckTimestamp = std::chrono::system_clock::now();
 }
 
+void AckManager::sendAckNoQueue(uint16_t seq)
+{
+	Packet* p = mEQNet->ackPacket;
+	p->setSequence(seq);
+	sendRaw(p->getRawBuffer(), p->lengthWithOverhead());
+}
+
 void AckManager::checkAutoAck()
 {
 	if (!mAutoAckEnabled)
@@ -83,6 +88,11 @@ void AckManager::checkAutoAck()
 void AckManager::sendKeepAliveAck()
 {
 	sendAck(mExpectedSeq - 1);
+}
+
+void AckManager::sendKeepAliveAckNoQueue()
+{
+	sendAckNoQueue(mExpectedSeq - 1);
 }
 
 void AckManager::checkInboundPacket(byte* packet, uint32_t len, uint32_t off)
@@ -126,21 +136,16 @@ void AckManager::checkInboundFragment(byte* packet, uint32_t len)
 		startFragSequence(packet, seq);
 		mFuturePackets[seq] = new ReadPacket(packet, len);
 
-		if (mFragEndReceived)
-			checkFragmentComplete();
+		checkFragmentComplete();
 	}
 	case SEQUENCE_FUTURE:
 	{
 		// future packet: remember it for later
 		mFuturePackets[seq] = new ReadPacket(packet, len);
 
-		if (!mFragEndReceived && seq == (mFragEnd - 1))
-			mFragEndReceived = true;
-
 		if (mBuildingFrag)
 		{
-			if (mFragEndReceived)
-				checkFragmentComplete();
+			checkFragmentComplete();
 			// if we didn't finish a packet...
 			if (mBuildingFrag && (seq - mFragMilestone) >= 10)
 			{
@@ -174,7 +179,7 @@ void AckManager::checkFragmentComplete()
 
 	uint32_t len = rp->len - 8;
 	uint16_t i = mFragStart + 1;
-	while (i != mFragEnd)
+	while (len < mFragExpectedLen)
 	{
 		rp = mFuturePackets[i];
 		if (rp == nullptr)
@@ -191,7 +196,7 @@ void AckManager::checkFragmentComplete()
 
 	// copy subsequence pieces
 	i = mFragStart + 1;
-	while (i != mFragEnd)
+	while (pos < mFragExpectedLen)
 	{
 		pos += copyFragment(out, pos, i);
 		++i;
@@ -203,7 +208,6 @@ void AckManager::checkFragmentComplete()
 	// clean up
 	mExpectedSeq = i;
 	mBuildingFrag = false;
-	mFragEndReceived = false;
 	sendAck(i - 1);
 
 	checkAfterPacket();
@@ -224,8 +228,7 @@ void AckManager::checkAfterPacket()
 		if (opcode == OP_Fragment)
 		{
 			startFragSequence(nextPacket->data, i);
-			if (mFragEndReceived)
-				checkFragmentComplete();
+			checkFragmentComplete();
 			return;
 		}
 		else
@@ -335,13 +338,5 @@ void AckManager::startFragSequence(byte* data, uint16_t seq)
 	// so this may fail in obscure circumstances
 
 	// find the expected end seq
-	uint32_t size = toHostLong(*(uint32_t*)(data + 4)) - 502;
-	// max packet size is 512 - 6 = 506
-	mFragEnd = seq + (size / 506) + 2;
-	// if it's an exact multiple we just overshot it by 1 (probably...)
-	if (size % 506 == 0)
-		--mFragEnd;
-	// check if we've already received the last frag
-	if (mFuturePackets[mFragEnd - 1])
-		mFragEndReceived = true;
+	mFragExpectedLen = toHostLong(*(uint32_t*)(data + 4));
 }

@@ -17,7 +17,25 @@ void Connection::initiateSession()
 	// send a session request to initiate with the server
 	sendSessionRequest();
 	setTimeoutEnabled(true);
+	setAutoAckEnabled(false);
 	resetTimeout();
+}
+
+void Connection::sessionHandoff(Address& addr)
+{
+	// send session disconnect to current address
+	sendSessionDisconnect();
+	// close socket
+	disconnect();
+	// set new address
+	setAddress(addr);
+	// open socket to new address
+	if (!connect())
+		return;
+	// reset ack manager
+	resetAcks();
+	// init session with new address
+	initiateSession();
 }
 
 void Connection::pump()
@@ -70,9 +88,12 @@ void Connection::processPackets()
 		case MODE_SERVER_SELECT:
 			processPacketLogin(opcode, data, len);
 			break;
-		case MODE_WORLD:
+		case MODE_LOGIN_TO_WORLD:
 		case MODE_CHAR_SELECT:
 			processPacketWorld(opcode, data, len);
+			break;
+		case MODE_WORLD_TO_ZONE:
+			processPacketZone(opcode, data, len);
 			break;
 		}
 		
@@ -164,8 +185,8 @@ void Connection::processPacketLogin(uint16_t opcode, byte* data, uint32_t len)
 			EQNet_Server& server = servers[i++];
 		
 			server.ip = copyStr();
-			server.listID = copyInt();
-			server.runtimeID = copyInt();
+			server.listId = copyInt();
+			server.runtimeId = copyInt();
 			server.name = copyStr();
 			server.language = copyStr();
 			server.region = copyStr();
@@ -196,21 +217,12 @@ void Connection::processPacketLogin(uint16_t opcode, byte* data, uint32_t len)
 		addr.ip = mEQNet->selectedServer->ip;
 		addr.port = 9000;
 
-		setAddress(addr);
 		recordAddress(mEQNet->addressWorld, addr);
 		
 		freeServerList(mEQNet);
-		sendSessionDisconnect();
 
-		mEQNet->mode = MODE_WORLD;
-		// disconnect from login
-		disconnect();
-		// connect to world
-		connect();
-		// reset ack manager
-		resetAcks();
-		// init session with world
-		initiateSession();
+		mEQNet->mode = MODE_LOGIN_TO_WORLD;
+		sessionHandoff(addr);
 		break;
 	}
 
@@ -222,9 +234,11 @@ void Connection::processPacketLogin(uint16_t opcode, byte* data, uint32_t len)
 
 void Connection::processPacketWorld(uint16_t opcode, byte* data, uint32_t len)
 {
-	printf("opcode 0x%0.4X -> 0x%0.4X\n", opcode, translateOpcodeFromServer(mEQNet, opcode));
-	switch (translateOpcodeFromServer(mEQNet, opcode))
+	uint16_t eqnetOpcode = translateOpcodeFromServer(mEQNet, opcode);
+	printf("opcode 0x%0.4X -> 0x%0.4X\n", opcode, eqnetOpcode);
+	switch (eqnetOpcode)
 	{
+	// packets on the way to char select
 	case EQNET_OP_GuildsList:
 	{
 		readGuilds(mEQNet, data, len);
@@ -261,6 +275,37 @@ void Connection::processPacketWorld(uint16_t opcode, byte* data, uint32_t len)
 	case EQNET_OP_ExpansionInfo:
 		break;
 
+	// packets on the way to zone
+	case EQNET_OP_ZoneUnavailable:
+		queueEvent(mEQNet, EQNET_ZONE_UNAVAILABLE);
+		break;
+
+	case EQNET_OP_MessageOfTheDay:
+		// plain cstring
+		queueZonePacketEvent(mEQNet, eqnetOpcode, data, len,
+			opcode, data, len);
+		break;
+
+	case EQNET_OP_SetChatServer:
+	case EQNET_OP_SetChatServer2:
+		break;
+
+	case EQNET_OP_ZoneServerInfo:
+	{
+		// struct seems to be the same for all client versions
+		Titanium::ZoneServerInfo_Struct* zs = (Titanium::ZoneServerInfo_Struct*)data;
+
+		Address addr;
+		addr.ip = zs->ip;
+		addr.port = zs->port;
+
+		recordAddress(mEQNet->addressZone, addr);
+
+		mEQNet->mode = MODE_WORLD_TO_ZONE;
+		sessionHandoff(addr);
+		break;
+	}
+
 	default:
 		printf("unhandled world opcode: 0x%0.4X\n", opcode);
 		for (uint32_t i = 0; i < len; ++i)
@@ -269,3 +314,10 @@ void Connection::processPacketWorld(uint16_t opcode, byte* data, uint32_t len)
 		break;
 	}
 }
+
+void Connection::processPacketZone(uint16_t opcode, byte* data, uint32_t len)
+{
+	uint16_t eqnetOpcode = translateOpcodeFromServer(mEQNet, opcode);
+
+	handleZonePacket(mEQNet, eqnetOpcode, opcode, data, len);
+};

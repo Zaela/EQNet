@@ -1,12 +1,34 @@
 
 #include "stdafx.h"
 
+static void enterWorldPacket(EQNet* net, EQNet_Character* character, bool tutorial = false, bool home = false);
+
 int EQNet_WorldToZone(EQNet* net, EQNet_Character* character)
 {
 	if (net->mode != MODE_CHAR_SELECT)
 		return false;
 
+	enterWorldPacket(net, character);
 	return true;
+}
+
+void enterWorldPacket(EQNet* net, EQNet_Character* character, bool tutorial, bool home)
+{
+	net->selectedCharacter = character;
+
+	// struct seems the same for all client versions
+	Packet* packet = new Packet(sizeof(Titanium::EnterWorld_Struct),
+		translateOpcodeToServer(net, EQNET_OP_EnterWorld));
+
+	Titanium::EnterWorld_Struct* ew = (Titanium::EnterWorld_Struct*)packet->getDataBuffer();
+	Util::strcpy(ew->name, character->name, 64);
+
+	if (tutorial)
+		ew->tutorial = 1;
+	else if (home)
+		ew->return_home = 1;
+
+	packet->queue(net);
 }
 
 const EQNet_Guild* EQNet_GetGuildList(EQNet* net, int* count)
@@ -118,7 +140,7 @@ void readGuilds(EQNet* net, byte* data, uint32_t len)
 	case EQNET_CLIENT_REIGN_OF_FEAR2:
 	{
 		Underfoot::GuildsList_Struct* guilds = (Underfoot::GuildsList_Struct*)data;
-
+		
 		delGuildList(net);
 
 		if (guilds->highID == 0)

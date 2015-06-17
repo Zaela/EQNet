@@ -54,7 +54,7 @@ int EQNet_LoginToWorld(EQNet* net, EQNet_Server* server)
 	Packet* packet = new Packet(14, OP_PlayEverquestRequest);
 	Login_PlayRequest* pr = (Login_PlayRequest*)packet->getDataBuffer();
 	pr->sequence = 5;
-	pr->serverRuntimeID = server->runtimeID;
+	pr->serverRuntimeID = server->runtimeId;
 
 	packet->queue(net);
 	return true;
@@ -81,7 +81,7 @@ EQNet_Server* copyServer(EQNet_Server* src)
 	};
 
 	copy->ip = copyStr(src->ip);
-	copy->runtimeID = src->runtimeID;
+	copy->runtimeId = src->runtimeId;
 	return copy;
 }
 

@@ -19,15 +19,14 @@ private:
 	std::chrono::system_clock::time_point mAutoAckTimestamp;
 	bool mAutoAckEnabled;
 
-	//these overflow by design
+	// these overflow by design
 	uint16_t mExpectedSeq;
 	uint16_t mLastReceivedAck;
 
-	//fragment-related
+	// fragment-related
 	bool mBuildingFrag;
-	bool mFragEndReceived;
 	uint16_t mFragStart;
-	uint16_t mFragEnd;
+	uint32_t mFragExpectedLen;
 	uint16_t mFragMilestone;
 
 	ReadPacket* mFuturePackets[SEQUENCE_MAX];
@@ -61,10 +60,15 @@ public:
 	void receiveAck(uint16_t seq);
 	void sendAck(uint16_t seq);
 	void sendKeepAliveAck();
+	void sendAckNoQueue(uint16_t seq);
+	void sendKeepAliveAckNoQueue();
+
+
 	void checkInboundPacket(byte* packet, uint32_t len, uint32_t off = 2);
 	void checkInboundFragment(byte* packet, uint32_t len);
 	void checkFragmentComplete();
 	void checkAfterPacket();
+
 	void queueRawPacket(byte* data, uint32_t len);
 	bool resendUnackedPackets();
 	void startFragSequence(byte* data, uint16_t seq);

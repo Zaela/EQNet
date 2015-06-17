@@ -49,12 +49,10 @@ void Receiver::readPacket(byte* data, uint32_t len, bool fromCombined)
 			packet->queue(mEQNet);
 			break;
 		}
-		case MODE_WORLD:
+		case MODE_LOGIN_TO_WORLD:
 		{
 			// echo session response to the server
 			sendRaw(data, len);
-
-			// say hello to the world server
 			setAutoAckEnabled(true);
 
 			// struct seems to be the same for all client versions
@@ -69,6 +67,24 @@ void Receiver::readPacket(byte* data, uint32_t len, bool fromCombined)
 
 			packet->queue(mEQNet);
 			queueEvent(mEQNet, EQNET_LOGIN_TO_WORLD);
+			break;
+		}
+		case MODE_WORLD_TO_ZONE:
+		{
+			// echo session response to the server
+			sendRaw(data, len);
+			setAutoAckEnabled(true);
+			setTimeoutEnabled(false); // put this in the response to a later packet, later
+
+			// struct seems to be the same for all client versions
+			Packet* packet = new Packet(sizeof(Titanium::ClientZoneEntry_Struct),
+				translateOpcodeToServer(mEQNet, EQNET_OP_ZoneEntry));
+			Titanium::ClientZoneEntry_Struct* cze = (Titanium::ClientZoneEntry_Struct*)packet->getDataBuffer();
+
+			Util::strcpy(cze->char_name, mEQNet->selectedCharacter->name, 64);
+
+			packet->queue(mEQNet);
+			queueEvent(mEQNet, EQNET_WORLD_TO_ZONE);
 			break;
 		}
 		default:
