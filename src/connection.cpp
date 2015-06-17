@@ -192,8 +192,6 @@ void Connection::processPacketLogin(uint16_t opcode, byte* data, uint32_t len)
 			return;
 		}
 
-		printf("PlayEverquestResponse\n");
-
 		Address addr;
 		addr.ip = mEQNet->selectedServer->ip;
 		addr.port = 9000;

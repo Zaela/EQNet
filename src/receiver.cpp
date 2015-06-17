@@ -19,7 +19,7 @@ void Receiver::readPacket(byte* data, uint32_t len, bool fromCombined)
 
 	if (opcode > 0xFF)
 	{
-		//raw packet, no protocol
+		// raw packet, no protocol
 		queueRawPacket(data, len);
 		return;
 	}

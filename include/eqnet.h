@@ -53,7 +53,8 @@ enum EQNet_ClientVersion
 	EQNET_CLIENT_REIGN_OF_FEAR2
 };
 
-EQNET_API void EQNet_SetClientVersion(EQNet*, EQNet_ClientVersion version);
+EQNET_API void                  EQNet_SetClientVersion(EQNet*, EQNet_ClientVersion version);
+EQNET_API EQNet_ClientVersion   EQNet_GetClientVersion(EQNet*);
 
 /*
 ** Fatal Errors

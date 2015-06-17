@@ -93,10 +93,10 @@ void AckManager::checkInboundPacket(byte* packet, uint32_t len, uint32_t off)
 	{
 	case SEQUENCE_PRESENT:
 	{
-		//this is our next expected packet, queue it
-		mReadPacketQueue.push(new ReadPacket(packet + 2 + off, len - 2 - off)); //may want to handle the +4 -4 at the end for all packets equally to avoid intermediate allocations
+		// this is our next expected packet, queue it
+		mReadPacketQueue.push(new ReadPacket(packet + 2 + off, len - 2 - off)); // may want to handle the +4 -4 at the end for all packets equally to avoid intermediate allocations
 		++mExpectedSeq;
-		//check if we have any packets ahead of this one ready to be processed
+		// check if we have any packets ahead of this one ready to be processed
 		checkAfterPacket();
 
 		sendAck(mExpectedSeq - 1);
@@ -104,7 +104,7 @@ void AckManager::checkInboundPacket(byte* packet, uint32_t len, uint32_t off)
 	}
 	case SEQUENCE_FUTURE:
 	{
-		//future packet: remember it for later
+		// future packet: remember it for later
 		mFuturePackets[seq] = new ReadPacket(packet, len);
 		break;
 	}
@@ -122,7 +122,7 @@ void AckManager::checkInboundFragment(byte* packet, uint32_t len)
 	{
 	case SEQUENCE_PRESENT:
 	{
-		//this is the starting packet of a fragment sequence
+		// this is the starting packet of a fragment sequence
 		startFragSequence(packet, seq);
 		mFuturePackets[seq] = new ReadPacket(packet, len);
 
@@ -131,7 +131,7 @@ void AckManager::checkInboundFragment(byte* packet, uint32_t len)
 	}
 	case SEQUENCE_FUTURE:
 	{
-		//future packet: remember it for later
+		// future packet: remember it for later
 		mFuturePackets[seq] = new ReadPacket(packet, len);
 
 		if (!mFragEndReceived && seq == (mFragEnd - 1))
@@ -141,7 +141,7 @@ void AckManager::checkInboundFragment(byte* packet, uint32_t len)
 		{
 			if (mFragEndReceived)
 				checkFragmentComplete();
-			//if we didn't finish a packet...
+			// if we didn't finish a packet...
 			if (mBuildingFrag && (seq - mFragMilestone) >= 10)
 			{
 				mFragMilestone = seq;
@@ -183,13 +183,13 @@ void AckManager::checkFragmentComplete()
 		++i;
 	}
 
-	//if we're still here, we had a complete fragment sequence, and we know how long it is
+	// if we're still here, we had a complete fragment sequence, and we know how long it is
 	ReadPacket* out = new ReadPacket(nullptr, len);
 
-	//copy first piece
+	// copy first piece
 	uint32_t pos = copyFragment(out, 0, mFragStart, 8);
 
-	//copy subsequence pieces
+	// copy subsequence pieces
 	i = mFragStart + 1;
 	while (i != mFragEnd)
 	{
@@ -197,10 +197,10 @@ void AckManager::checkFragmentComplete()
 		++i;
 	}
 
-	//add to queue
+	// add to queue
 	mReadPacketQueue.push(out);
 
-	//clean up
+	// clean up
 	mExpectedSeq = i;
 	mBuildingFrag = false;
 	mFragEndReceived = false;
@@ -279,9 +279,9 @@ void AckManager::sendMaxTimeoutLengthRequest()
 	SessionStat ss;
 
 	ss.opcode = toNetworkShort(OP_SessionStatRequest);
-	//having a high value here maxes out the timeout window to 5 seconds, so we don't have to spam acks quite so much
+	// having a high value here maxes out the timeout window to 5 seconds, so we don't have to spam acks quite so much
 	ss.last_local_delta = toNetworkLong(5000000);
-	//while this one decreases the amount of time the server waits between sending us strings of queued packets
+	// while this one decreases the amount of time the server waits between sending us strings of queued packets
 	ss.average_delta = toNetworkLong(25);
 
 	sendRaw(&ss, sizeof(SessionStat));
@@ -291,7 +291,7 @@ void AckManager::queueRawPacket(byte* packet, uint32_t len)
 {
 	ReadPacket* rp;
 
-	if (len > 2 && packet[1] == 0xA5) //"not compressed" flag in between the two bytes of the opcode
+	if (len > 2 && packet[1] == 0xA5) // "not compressed" flag in between the two bytes of the opcode
 	{
 		packet[1] = packet[0];
 		rp = new ReadPacket(packet + 1, len - 1);
@@ -334,14 +334,14 @@ void AckManager::startFragSequence(byte* data, uint16_t seq)
 	// some fragmented packets misreport their size by a byte or two,
 	// so this may fail in obscure circumstances
 
-	//find the expected end seq
+	// find the expected end seq
 	uint32_t size = toHostLong(*(uint32_t*)(data + 4)) - 502;
-	//max packet size is 512 - 6 = 506
+	// max packet size is 512 - 6 = 506
 	mFragEnd = seq + (size / 506) + 2;
-	//if it's an exact multiple we just overshot it by 1
+	// if it's an exact multiple we just overshot it by 1 (probably...)
 	if (size % 506 == 0)
 		--mFragEnd;
-	//check if we've already received the last frag
+	// check if we've already received the last frag
 	if (mFuturePackets[mFragEnd - 1])
 		mFragEndReceived = true;
 }

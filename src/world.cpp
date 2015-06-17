@@ -119,6 +119,11 @@ void readGuilds(EQNet* net, byte* data, uint32_t len)
 	{
 		Underfoot::GuildsList_Struct* guilds = (Underfoot::GuildsList_Struct*)data;
 
+		delGuildList(net);
+
+		if (guilds->highID == 0)
+			break;
+
 		EQNet_Guild* list = allocGuildList(net, guilds->highID - 1);
 		// uint32_t id + cstr name
 		uint32_t pos = sizeof(Underfoot::GuildsList_Struct);

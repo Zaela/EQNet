@@ -65,5 +65,12 @@ void EQNet_Destroy(EQNet* net)
 
 void EQNet_SetClientVersion(EQNet* net, EQNet_ClientVersion version)
 {
+	if (net->mode >= MODE_WORLD)
+		return;
 	net->clientVersion = version;
+}
+
+EQNet_ClientVersion EQNet_GetClientVersion(EQNet* net)
+{
+	return (EQNet_ClientVersion)net->clientVersion;
 }
