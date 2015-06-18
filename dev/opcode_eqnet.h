@@ -14,6 +14,7 @@ struct OpCodeTranslation
 
 enum Unexposed_OpCodes
 {
+	/* World and char select */
 	EQNET_OP_SendLoginInfo = EQNET_OP_MAX_COUNT,
 	EQNET_OP_GuildsList,
 	EQNET_OP_LogServer,
@@ -27,13 +28,18 @@ enum Unexposed_OpCodes
 	EQNET_OP_SetChatServer2,
 	EQNET_OP_ZoneUnavailable,
 	EQNET_OP_ZoneServerInfo,
-	EQNET_OP_ZoneEntry,
+	/* Zone-in */
+	EQNET_OP_ZoneSpawns,
+	EQNET_OP_ReqNewZone,
+	EQNET_OP_ReqClientSpawn,
+	EQNET_OP_ClientReady,
 	EQNET_OP_INTERNAL_MAX_COUNT
 };
 
 uint16_t translateOpcodeFromServer(EQNet*, uint16_t opcode);
 uint16_t translateOpcodeToServer(EQNet*, uint16_t opcode);
 void initNoDeleteOpcodes();
+void setNoDeleteOpcode(uint16_t opcode);
 uint32_t isNoDeleteOpcode(uint16_t opcode);
 void checkSpecialDestructor(EQNet_Packet& packet);
 

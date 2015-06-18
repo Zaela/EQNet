@@ -1,6 +1,6 @@
 
-#ifndef _EQNET_PACKET_H_
-#define _EQNET_PACKET_H_
+#ifndef _EQNET_EVENT_Packet_H_
+#define _EQNET_EVENT_Packet_H_
 
 #include <cstdint>
 #include <cstring>
@@ -21,7 +21,7 @@ private:
 	byte* mBuffer;
 
 public:
-	Packet(uint32_t data_len, uint16_t opcode, bool hasSequence = true, int protocol_opcode = OP_Packet);
+	Packet(EQNet* net, uint32_t data_len, uint16_t opcode, bool hasSequence = true, int protocol_opcode = OP_Packet);
 	Packet();
 	Packet(const Packet& toCopy);
 	~Packet();
@@ -40,6 +40,9 @@ public:
 
 	bool isNoDelete() { return mNoDelete; }
 	void setNoDelete() { mNoDelete = true; }
+
+	static void queueZeroLength(EQNet* net, uint16_t opcode);
+	static void queueFourByte(EQNet* net, uint16_t opcode, uint32_t value);
 };
 
 struct ReadPacket
@@ -70,8 +73,8 @@ private:
 	static const uint32_t MAX_SINGLE_PACKET_LEN = 255;
 
 private:
-	uint32_t mPacketCount;
-	uint32_t mLen;
+	uint16_t mPacketCount;
+	uint16_t mLen;
 	byte mBuffer[512];
 	Packet* mFirstPacket;
 
@@ -82,9 +85,9 @@ public:
 	void clear();
 
 	byte* getBuffer() { return mBuffer; }
-	uint32_t length() { return mLen; }
-	uint32_t getPacketCount() { return mPacketCount; }
+	uint16_t length() { return mLen; }
+	uint16_t getPacketCount() { return mPacketCount; }
 	Packet* getFirstPacket() { return mFirstPacket; }
 };
 
-#endif//_EQNET_PACKET_H_
+#endif//_EQNET_EVENT_Packet_H_

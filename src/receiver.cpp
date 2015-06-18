@@ -35,13 +35,15 @@ void Receiver::readPacket(byte* data, uint32_t len, bool fromCombined)
 		uint32_t crcKey = toHostLong(sr->key);
 
 		setCRCKey(crcKey);
+		mEQNet->awaitingSession = false;
+		mEQNet->retryCount = 0;
 
 		switch (mEQNet->mode)
 		{
 		case MODE_LOGIN:
 		{
 			// send session ready packet
-			Packet* packet = new Packet(12, OP_SessionReady);
+			Packet* packet = new Packet(nullptr, 12, OP_SessionReady);
 			byte* b = packet->getDataBuffer();
 			b[0] = 2;
 			b[10] = 8;
@@ -49,6 +51,7 @@ void Receiver::readPacket(byte* data, uint32_t len, bool fromCombined)
 			packet->queue(mEQNet);
 			break;
 		}
+
 		case MODE_LOGIN_TO_WORLD:
 		{
 			// echo session response to the server
@@ -56,8 +59,7 @@ void Receiver::readPacket(byte* data, uint32_t len, bool fromCombined)
 			setAutoAckEnabled(true);
 
 			// struct seems to be the same for all client versions
-			Packet* packet = new Packet(sizeof(Titanium::LoginInfo_Struct),
-				translateOpcodeToServer(mEQNet, EQNET_OP_SendLoginInfo));
+			Packet* packet = new Packet(mEQNet, sizeof(Titanium::LoginInfo_Struct), EQNET_OP_SendLoginInfo);
 			Titanium::LoginInfo_Struct* li = (Titanium::LoginInfo_Struct*)packet->getDataBuffer();
 
 			// login_info -> accountID as a string, null terminator, session key
@@ -66,27 +68,27 @@ void Receiver::readPacket(byte* data, uint32_t len, bool fromCombined)
 			memcpy(&li->login_info[strlen(li->login_info) + 1], getSessionKey().c_str(), getSessionKey().length());
 
 			packet->queue(mEQNet);
-			queueEvent(mEQNet, EQNET_LOGIN_TO_WORLD);
+			queueEvent(mEQNet, EQNET_EVENT_LoginToWorld);
 			break;
 		}
+
 		case MODE_WORLD_TO_ZONE:
 		{
 			// echo session response to the server
 			sendRaw(data, len);
 			setAutoAckEnabled(true);
-			setTimeoutEnabled(false); // put this in the response to a later packet, later
 
 			// struct seems to be the same for all client versions
-			Packet* packet = new Packet(sizeof(Titanium::ClientZoneEntry_Struct),
-				translateOpcodeToServer(mEQNet, EQNET_OP_ZoneEntry));
+			Packet* packet = new Packet(mEQNet, sizeof(Titanium::ClientZoneEntry_Struct), EQNET_OP_PlayerSpawn);
 			Titanium::ClientZoneEntry_Struct* cze = (Titanium::ClientZoneEntry_Struct*)packet->getDataBuffer();
 
 			Util::strcpy(cze->char_name, mEQNet->selectedCharacter->name, 64);
 
 			packet->queue(mEQNet);
-			queueEvent(mEQNet, EQNET_WORLD_TO_ZONE);
+			queueEvent(mEQNet, EQNET_EVENT_Zoning);
 			break;
 		}
+
 		default:
 			// echo session response to the server
 			sendRaw(data, len);
@@ -146,7 +148,7 @@ void Receiver::readPacket(byte* data, uint32_t len, bool fromCombined)
 	}
 
 	case OP_SessionDisconnect:
-		queueEvent(mEQNet, EQNET_DISCONNECTED);
+		queueEvent(mEQNet, EQNET_EVENT_Disconnected);
 		break;
 		
 	// packets we don't care about

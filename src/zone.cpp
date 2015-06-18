@@ -1,9 +1,9 @@
 
 #include "stdafx.h"
 
-void EQNet_EnablePacketPayloadTranslation(EQNet* net, int setting)
+void EQNet_EnablePacketTranslation(EQNet* net, int setting)
 {
-	net->translateZonePackets = (setting != 0);
+	net->translateZonePackets = setting ? 1 : 0;
 }
 
 ////////////////////////////////////////////////////////////////
@@ -57,6 +57,44 @@ HANDLER(PlayerProfile)
 	queueZonePacketEvent(net, eqnetOpcode, nullptr, 0, opcode, data, len);
 }
 
+HANDLER(WeatherUpdate)
+{
+	// if we are entering a zone, we need to send something right after receiving this
+	if (net->mode == MODE_WORLD_TO_ZONE)
+	{
+		Packet::queueZeroLength(net, EQNET_OP_ReqNewZone);
+	}
+
+	PREAMBLE;
+
+	// translate
+}
+
+HANDLER(ZoneData)
+{
+	// send client spawn request
+	Packet::queueZeroLength(net, EQNET_OP_ReqClientSpawn);
+
+	PREAMBLE;
+}
+
+HANDLER(SetExperience)
+{
+	if (len == 0)
+	{
+		// send client ready packet
+		Packet::queueZeroLength(net, EQNET_OP_ClientReady);
+
+		// might be a better, later packet to trigger this on
+		queueEvent(net, EQNET_EVENT_AtZone);
+		net->mode = MODE_ZONE;
+		net->connection->setTimeoutEnabled(false); // ? need to decide how/if this should work while in-zone
+		return;
+	}
+
+	PREAMBLE;
+}
+
 /////////////////////////////////////////////
 // Packets received while in-zone
 /////////////////////////////////////////////
@@ -81,16 +119,42 @@ HANDLER(HpUpdatePercent)
 	QUEUE_STRUCT(hp, HpUpdatePercent);
 }
 
+HANDLER(Consider)
+{
+	PREAMBLE;
+	ALLOC_STRUCT(con, Consider);
+
+	switch (net->clientVersion)
+	{
+	case EQNET_CLIENT_Titanium:
+	{
+		CAST(src, Titanium::Consider_Struct);
+		con->mobId = src->targetid;
+		//con-> handle faction and color con translation
+		break;
+	}
+	} // switch
+
+	QUEUE_STRUCT(con, Consider);
+}
+
 // handler must have same name as EQNET_OP_
 #define SET(handler) gZonePacketHandlers[EQNET_OP_##handler] = zph##handler
-#define REUSE(name) gZonePacketHandlers[EQNET_OP_##name] = zphReuseNative
+#define REUSE(name) gZonePacketHandlers[EQNET_OP_##name] = zphReuseNative; setNoDeleteOpcode(EQNET_OP_##name)
 
 void initZonePacketHandlers()
 {
 	SET(PlayerProfile);
-	REUSE(Despawn);
+	SET(WeatherUpdate);
+	SET(ZoneData);
+	SET(SetExperience);
+
 	SET(HpUpdateExact);
 	SET(HpUpdatePercent);
+	SET(Consider);
+
+	REUSE(Assist);
+	REUSE(Despawn);
 	REUSE(TimeUpdate);
 }
 

@@ -249,7 +249,10 @@ void AckManager::checkAfterPacket()
 
 void AckManager::sendSessionRequest()
 {
-	mSessionID = (uint32_t)this;//gRNG();
+	if (!mEQNet->rng)
+		mEQNet->rng = new Random();
+
+	mSessionID = (*mEQNet->rng)();
 	SessionRequest sr;
 
 	sr.opcode = toNetworkShort(OP_SessionRequest);
@@ -258,6 +261,8 @@ void AckManager::sendSessionRequest()
 	sr.maxLength = toNetworkLong(512);
 
 	sendRaw(&sr, sizeof(SessionRequest));
+
+	mEQNet->awaitingSession = true;
 }
 
 void AckManager::sendSessionDisconnect()

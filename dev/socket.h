@@ -36,6 +36,8 @@
 #define toHostLong ntohl
 #define toHostShort ntohs
 
+#define SOCKET_TIMEOUT_SECONDS 2.0
+
 class Socket
 {
 private:

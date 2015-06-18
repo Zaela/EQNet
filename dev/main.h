@@ -7,12 +7,14 @@
 #include "packet.h"
 #include "compression.h"
 #include "connection.h"
+#include "random.h"
 #include <cstdint>
 #include <vector>
 
 #define EQNET_DEFAULT_LOGIN_IP "login.eqemulator.net"
 #define EQNET_DEFAULT_LOGIN_PORT 5998
-#define EQNET_DEFAULT_CLIENT_VERSION EQNET_CLIENT_TITANIUM
+#define EQNET_DEFAULT_CLIENT_VERSION EQNET_CLIENT_Titanium
+#define EQNET_DEFAULT_RETRIES 5
 
 typedef uint8_t byte;
 
@@ -22,7 +24,9 @@ enum EQNet_Mode
 	MODE_SERVER_SELECT,
 	MODE_LOGIN_TO_WORLD,
 	MODE_CHAR_SELECT,
-	MODE_WORLD_TO_ZONE
+	MODE_WORLD_TO_ZONE,
+	MODE_ZONE_TO_ZONE,
+	MODE_ZONE
 };
 
 struct EQNet
@@ -36,12 +40,18 @@ struct EQNet
 	int eventQueueCap;
 	EQNet_Event* eventQueue;
 
+	/* Booleans */
+	uint32_t translateZonePackets : 1;
+	uint32_t awaitingSession : 1;
+	uint32_t unusedBits : 30;
+
 	/* Network IO */
 	Packet* ackPacket;
 	Connection* connection;
+	uint32_t retryCount;
+	uint32_t retryMaxAttempts;
 
 	/* Zone */
-	bool translateZonePackets;
 	EQNet_Character* selectedCharacter;
 	Address addressZone;
 
@@ -60,6 +70,9 @@ struct EQNet
 	EQNet_Character* charList;
 	const char* serverShortName;
 	Address addressWorld;
+
+	/* Util */
+	Random* rng;
 
 	/* Compression */
 	byte compressBuffer[EQNET_COMPRESSION_BUFFER_LEN];

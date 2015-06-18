@@ -32,9 +32,10 @@ EQNet* EQNet_Create()
 	memset(net->eventQueue, 0, sizeof(EQNet_Event) * EQNET_EVENT_QUEUE_DEFAULT_LEN);
 	net->eventQueueCap = EQNET_EVENT_QUEUE_DEFAULT_LEN;
 
+	net->retryMaxAttempts = EQNET_DEFAULT_RETRIES;
 	net->translateZonePackets = true;
 
-	net->ackPacket = new Packet(2, OP_NONE, false, OP_Ack);
+	net->ackPacket = new Packet(nullptr, 2, OP_NONE, false, OP_Ack);
 	net->ackPacket->setNoDelete();
 	net->connection = new Connection(net);
 
@@ -76,6 +77,9 @@ void EQNet_Destroy(EQNet* net)
 
 	freeServerList(net);
 
+	if (net->rng)
+		delete net->rng;
+
 	delete net;
 }
 
@@ -89,4 +93,9 @@ void EQNet_SetClientVersion(EQNet* net, EQNet_ClientVersion version)
 EQNet_ClientVersion EQNet_GetClientVersion(EQNet* net)
 {
 	return (EQNet_ClientVersion)net->clientVersion;
+}
+
+void EQNet_SetMaxRetries(EQNet* net, uint32_t count)
+{
+	net->retryMaxAttempts = count;
 }

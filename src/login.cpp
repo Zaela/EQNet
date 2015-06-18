@@ -51,7 +51,7 @@ int EQNet_LoginToWorld(EQNet* net, EQNet_Server* server)
 	net->selectedServer = copyServer(server);
 
 	// inform the login server of our selection
-	Packet* packet = new Packet(14, OP_PlayEverquestRequest);
+	Packet* packet = new Packet(nullptr, 14, OP_PlayEverquestRequest);
 	Login_PlayRequest* pr = (Login_PlayRequest*)packet->getDataBuffer();
 	pr->sequence = 5;
 	pr->serverRuntimeID = server->runtimeId;

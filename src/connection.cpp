@@ -42,7 +42,8 @@ void Connection::pump()
 {
 	if (isTimedOut())
 	{
-		queueEvent(mEQNet, EQNET_TIMEOUT);
+		if (!retry())
+			queueEvent(mEQNet, EQNET_EVENT_Timeout);
 		resetTimeout();
 	}
 
@@ -59,6 +60,22 @@ void Connection::pump()
 	}
 
 	processSendQueue();
+}
+
+bool Connection::retry()
+{
+	if (mEQNet->retryCount >= mEQNet->retryMaxAttempts)
+		return false;
+
+	mEQNet->retryCount++;
+
+	if (mEQNet->awaitingSession)
+	{
+		sendSessionRequest();
+		return true;
+	}
+
+	return true;
 }
 
 void Connection::processPackets()
@@ -93,6 +110,8 @@ void Connection::processPackets()
 			processPacketWorld(opcode, data, len);
 			break;
 		case MODE_WORLD_TO_ZONE:
+		case MODE_ZONE_TO_ZONE:
+		case MODE_ZONE:
 			processPacketZone(opcode, data, len);
 			break;
 		}
@@ -111,7 +130,7 @@ void Connection::processPacketLogin(uint16_t opcode, byte* data, uint32_t len)
 		// we receive this to signal that the server's ready to
 		// receive login credentials, for whatever reason
 
-		Packet* packet = new Packet(10 + mEQNet->credentialsLen, OP_Login);
+		Packet* packet = new Packet(nullptr, 10 + mEQNet->credentialsLen, OP_Login);
 		byte* b = packet->getDataBuffer();
 		b[0] = 3;
 		b[5] = 2;
@@ -127,7 +146,7 @@ void Connection::processPacketLogin(uint16_t opcode, byte* data, uint32_t len)
 
 		if (len < 80)
 		{
-			queueEvent(mEQNet, EQNET_LOGIN_BAD_CREDENTIALS);
+			queueEvent(mEQNet, EQNET_EVENT_BadCredentials);
 			return;
 		}
 
@@ -143,8 +162,8 @@ void Connection::processPacketLogin(uint16_t opcode, byte* data, uint32_t len)
 
 		EQNet_Free(decrypted);
 
-		//send login server list request
-		Packet* packet = new Packet(10, OP_ServerListRequest);
+		// send login server list request
+		Packet* packet = new Packet(nullptr, 10, OP_ServerListRequest);
 		byte* b = packet->getDataBuffer();
 		b[0] = 4;
 
@@ -197,7 +216,7 @@ void Connection::processPacketLogin(uint16_t opcode, byte* data, uint32_t len)
 		mEQNet->serverListCount = count;
 		mEQNet->serverList = servers;
 		mEQNet->mode = MODE_SERVER_SELECT;
-		queueEvent(mEQNet, EQNET_LOGIN_AT_SERVER_SELECT);
+		queueEvent(mEQNet, EQNET_EVENT_AtServerSelect);
 		setTimeoutEnabled(false);
 		break;
 	}
@@ -209,7 +228,7 @@ void Connection::processPacketLogin(uint16_t opcode, byte* data, uint32_t len)
 		bool success = (pr->allowed > 0);
 		if (!success)
 		{
-			queueEvent(mEQNet, EQNET_WORLD_CONNECT_FAILED);
+			queueEvent(mEQNet, EQNET_EVENT_WorldConnectFailed);
 			return;
 		}
 
@@ -251,7 +270,7 @@ void Connection::processPacketWorld(uint16_t opcode, byte* data, uint32_t len)
 
 		setTimeoutEnabled(false);
 		mEQNet->mode = MODE_CHAR_SELECT;
-		queueEvent(mEQNet, EQNET_WORLD_AT_CHAR_SELECT);
+		queueEvent(mEQNet, EQNET_EVENT_AtCharacterSelect);
 		break;
 	}
 
@@ -277,7 +296,7 @@ void Connection::processPacketWorld(uint16_t opcode, byte* data, uint32_t len)
 
 	// packets on the way to zone
 	case EQNET_OP_ZoneUnavailable:
-		queueEvent(mEQNet, EQNET_ZONE_UNAVAILABLE);
+		queueEvent(mEQNet, EQNET_EVENT_ZoneUnavailable);
 		break;
 
 	case EQNET_OP_MessageOfTheDay:

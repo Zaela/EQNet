@@ -34,9 +34,6 @@ private:
 protected:
 	std::queue<ReadPacket*> mReadPacketQueue;
 
-protected:
-	void setAutoAckEnabled(bool to) { mAutoAckEnabled = to; }
-
 private:
 	enum PacketSequence
 	{
@@ -62,7 +59,7 @@ public:
 	void sendKeepAliveAck();
 	void sendAckNoQueue(uint16_t seq);
 	void sendKeepAliveAckNoQueue();
-
+	void setAutoAckEnabled(bool to) { mAutoAckEnabled = to; }
 
 	void checkInboundPacket(byte* packet, uint32_t len, uint32_t off = 2);
 	void checkInboundFragment(byte* packet, uint32_t len);

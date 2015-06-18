@@ -17,8 +17,7 @@ void enterWorldPacket(EQNet* net, EQNet_Character* character, bool tutorial, boo
 	net->selectedCharacter = character;
 
 	// struct seems the same for all client versions
-	Packet* packet = new Packet(sizeof(Titanium::EnterWorld_Struct),
-		translateOpcodeToServer(net, EQNET_OP_EnterWorld));
+	Packet* packet = new Packet(net, sizeof(Titanium::EnterWorld_Struct), EQNET_OP_EnterWorld);
 
 	Titanium::EnterWorld_Struct* ew = (Titanium::EnterWorld_Struct*)packet->getDataBuffer();
 	Util::strcpy(ew->name, character->name, 64);
@@ -92,9 +91,9 @@ void readGuilds(EQNet* net, byte* data, uint32_t len)
 {
 	switch (net->clientVersion)
 	{
-	case EQNET_CLIENT_TITANIUM:
-	case EQNET_CLIENT_SECRETS_OF_FAYDWER:
-	case EQNET_CLIENT_SEEDS_OF_DESTRUCTION:
+	case EQNET_CLIENT_Titanium:
+	case EQNET_CLIENT_SecretsOfFaydwer:
+	case EQNET_CLIENT_SeedsOfDestruction:
 	{
 		Titanium::GuildsListEntry_Struct* guilds = (Titanium::GuildsListEntry_Struct*)data;
 
@@ -135,9 +134,9 @@ void readGuilds(EQNet* net, byte* data, uint32_t len)
 		}
 		break;
 	}
-	case EQNET_CLIENT_UNDERFOOT:
-	case EQNET_CLIENT_REIGN_OF_FEAR:
-	case EQNET_CLIENT_REIGN_OF_FEAR2:
+	case EQNET_CLIENT_Underfoot:
+	case EQNET_CLIENT_ReignOfFear:
+	case EQNET_CLIENT_ReignOfFear2:
 	{
 		Underfoot::GuildsList_Struct* guilds = (Underfoot::GuildsList_Struct*)data;
 		
@@ -169,7 +168,7 @@ void readCharSelectCharacters(EQNet* net, byte* data, uint32_t len)
 {
 	switch (net->clientVersion)
 	{
-	case EQNET_CLIENT_TITANIUM:
+	case EQNET_CLIENT_Titanium:
 	{
 		Titanium::CharacterSelect_Struct* cs = (Titanium::CharacterSelect_Struct*)data;
 
@@ -197,7 +196,8 @@ void readCharSelectCharacters(EQNet* net, byte* data, uint32_t len)
 				list->race = cs->race[i];
 				list->gender = cs->gender[i];
 				list->deity = cs->deity[i];
-				list->zone = cs->zone[i];
+				list->zoneId = cs->zone[i];
+				list->instanceId = 0;
 
 				++list;
 			}
@@ -205,11 +205,11 @@ void readCharSelectCharacters(EQNet* net, byte* data, uint32_t len)
 		break;
 	}
 
-	case EQNET_CLIENT_SECRETS_OF_FAYDWER:
-	case EQNET_CLIENT_SEEDS_OF_DESTRUCTION:
-	case EQNET_CLIENT_UNDERFOOT:
-	case EQNET_CLIENT_REIGN_OF_FEAR:
-	case EQNET_CLIENT_REIGN_OF_FEAR2:
+	case EQNET_CLIENT_SecretsOfFaydwer:
+	case EQNET_CLIENT_SeedsOfDestruction:
+	case EQNET_CLIENT_Underfoot:
+	case EQNET_CLIENT_ReignOfFear:
+	case EQNET_CLIENT_ReignOfFear2:
 	{
 		Underfoot::CharacterSelect_Struct* cs = (Underfoot::CharacterSelect_Struct*)data;
 
@@ -234,7 +234,8 @@ void readCharSelectCharacters(EQNet* net, byte* data, uint32_t len)
 			list->charClass = csb->Class;
 			list->race = csb->Race;
 			list->deity = csb->Deity;
-			list->zone = csb->Zone;
+			list->zoneId = csb->Zone;
+			list->instanceId = csb->Instance;
 
 			pos += sizeof(Underfoot::CharacterSelectEntryB_Struct);
 		}

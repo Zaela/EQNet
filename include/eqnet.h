@@ -7,6 +7,7 @@
 #define _EQNET_H_
 
 #include <stdint.h>
+#include "eqnet_enums.h"
 #include "eqnet_packets.h"
 
 #ifdef EQNET_STATIC
@@ -24,7 +25,10 @@
 #endif
 
 #ifdef __cplusplus
+ #define EQNET_DEFAULT(val) = val
 extern "C" {
+#else
+ #define EQNET_DEFAULT(val)
 #endif
 
 /*
@@ -50,17 +54,9 @@ EQNET_API void      EQNet_Close();
 EQNET_API EQNet*    EQNet_Create();
 EQNET_API void      EQNet_Destroy(EQNet*);
 
-enum EQNet_ClientVersion
-{
-	EQNET_CLIENT_TITANIUM,
-	EQNET_CLIENT_SECRETS_OF_FAYDWER,
-	EQNET_CLIENT_SEEDS_OF_DESTRUCTION,
-	EQNET_CLIENT_UNDERFOOT,
-	EQNET_CLIENT_REIGN_OF_FEAR,
-	EQNET_CLIENT_REIGN_OF_FEAR2
-};
-
-EQNET_API void EQNet_SetClientVersion(EQNet*, EQNet_ClientVersion version);
+EQNET_API void                EQNet_SetClientVersion(EQNet*, EQNet_ClientVersion version);
+EQNET_API EQNet_ClientVersion EQNet_GetClientVersion(EQNet*);
+EQNET_API void                EQNet_SetMaxRetries(EQNet*, uint32_t count);
 
 /*
 ** Errors
@@ -74,7 +70,7 @@ EQNET_API const char* EQNet_GetErrorMessage(EQNet*);
 ** Login
 */
 
-EQNET_API void                  EQNet_SetLoginServer(EQNet*, const char* ip, uint16_t port);
+EQNET_API void                  EQNet_SetLoginServer(EQNet*, const char* ip, uint16_t port EQNET_DEFAULT(5998));
 EQNET_API EQNetBOOL             EQNet_LoginToServerSelect(EQNet*, const char* username, const char* password);
 EQNET_API EQNetBOOL             EQNet_LoginToWorld(EQNet*, EQNet_Server* server);
 
@@ -86,8 +82,8 @@ EQNET_API EQNetBOOL             EQNet_ServerIsLocked(EQNet*, EQNet_Server* serve
 ** World
 */
 
-EQNET_API const char*   EQNet_GetServerShortName(EQNet*);
 EQNET_API EQNetBOOL     EQNet_WorldToZone(EQNet*, EQNet_Character* character);
+EQNET_API const char*   EQNet_GetServerShortName(EQNet*);
 
 EQNET_API const EQNet_Guild*        EQNet_GetGuildList(EQNet*, int* count);
 EQNET_API const EQNet_Character*    EQNet_GetCharacterList(EQNet*, int* count);
@@ -96,7 +92,18 @@ EQNET_API const EQNet_Character*    EQNet_GetCharacterList(EQNet*, int* count);
 ** Zone
 */
 
-EQNET_API void EQNet_EnablePacketPayloadTranslation(EQNet*, int setting);
+EQNET_API void EQNet_EnablePacketTranslation(EQNet*, EQNetBOOL setting);
+
+/*
+** Combat
+*/
+
+EQNET_API void EQNet_SetTarget(EQNet*, EQNet_Id target);
+EQNET_API void EQNet_SetAutoAttacking(EQNet*, EQNetBOOL setting);
+EQNET_API void EQNet_SetAutoFiring(EQNet*, EQNetBOOL setting);
+EQNET_API void EQNet_Assist(EQNet*, EQNet_Id target);
+EQNET_API void EQNet_Consider(EQNet*, EQNet_Id target);
+EQNET_API void EQNet_UseSkill(EQNet*, EQNet_Skill skill, EQNet_Id target EQNET_DEFAULT(0));
 
 /*
 ** Raw I/O
@@ -112,26 +119,6 @@ EQNET_API void EQNet_SendRawBytes(EQNet*, const void* data, uint32_t len);
 */
 
 EQNET_API EQNetBOOL EQNet_Poll(EQNet*, EQNet_Event* ev);
-
-enum EQNet_EventType
-{
-	EQNET_FATAL_ERROR,
-	EQNET_INVALID_OPERATION,
-	/* Connection */
-	EQNET_TIMEOUT,
-	EQNET_DISCONNECTED,
-	/* Login */
-	EQNET_LOGIN_BAD_CREDENTIALS,
-	EQNET_LOGIN_AT_SERVER_SELECT,
-	EQNET_LOGIN_TO_WORLD,
-	/* World */
-	EQNET_WORLD_CONNECT_FAILED,
-	EQNET_WORLD_AT_CHAR_SELECT,
-	EQNET_WORLD_TO_ZONE,
-	/* Zone */
-	EQNET_ZONE_UNAVAILABLE,
-	EQNET_ZONE_PACKET
-};
 
 /*
 ** Structs
@@ -163,7 +150,8 @@ struct EQNet_Character
 	uint8_t gender;
 	uint32_t race;
 	uint32_t deity;
-	uint32_t zone;
+	uint16_t zoneId;
+	uint16_t instanceId;
 };
 
 struct EQNet_Packet

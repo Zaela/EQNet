@@ -17,6 +17,7 @@ private:
 	void processPacketZone(uint16_t opcode, byte* data, uint32_t len);
 
 	void sessionHandoff(Address& addr);
+	bool retry();
 
 public:
 	Connection(EQNet* net);

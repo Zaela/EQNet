@@ -1,7 +1,7 @@
 
 #include "stdafx.h"
 
-Packet::Packet(uint32_t data_len, uint16_t opcode, bool hasSequence, int protocol_opcode) :
+Packet::Packet(EQNet* net, uint32_t data_len, uint16_t opcode, bool hasSequence, int protocol_opcode) :
 	mNoDelete(false),
 	mHasSeq(hasSequence),
 	mBuffer(nullptr)
@@ -36,6 +36,8 @@ Packet::Packet(uint32_t data_len, uint16_t opcode, bool hasSequence, int protoco
 
 	if (opcode != OP_NONE)
 	{
+		if (net)
+			opcode = translateOpcodeToServer(net, opcode);
 		ptr[(mHasSeq ? 2 : 1) + opOffset] = opcode;
 	}
 	else
@@ -84,6 +86,19 @@ void Packet::queue(EQNet* net)
 	net->connection->queuePacket(this);
 }
 
+void Packet::queueZeroLength(EQNet* net, uint16_t opcode)
+{
+	Packet* p = new Packet(net, 0, opcode);
+	p->queue(net);
+}
+
+void Packet::queueFourByte(EQNet* net, uint16_t opcode, uint32_t value)
+{
+	Packet* p = new Packet(net, sizeof(uint32_t), opcode);
+	*(uint32_t*)p->getDataBuffer() = value;
+	p->queue(net);
+}
+
 // for debug messages
 uint16_t Packet::getProtocolOpcode()
 {
@@ -123,7 +138,7 @@ bool CombinedPacket::addPacket(Packet* p)
 	mBuffer[mLen] = (uint8_t)len;
 	memcpy(&mBuffer[mLen + 1], p->getRawBuffer(), len);
 
-	mLen = addLen;
+	mLen = (uint16_t)addLen;
 	++mPacketCount;
 	return true;
 }

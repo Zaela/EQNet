@@ -180,7 +180,7 @@ void Socket::sendPacketFragmented(Packet* p)
 
 	// stated len is minus all overhead except app opcode
 	uint32_t minus;
-	if (p->hasSequence())
+	if (p->hasSequence()) // would we ever fragment a non-sequenced packet? gonna get sequenced anyway
 		minus = 4; // protocol opcode + seq
 	else
 		minus = 2; // protocol opcode
@@ -233,7 +233,8 @@ void Socket::sendPacket(byte* data, uint32_t len)
 			buf[2] = 0xa5;
 
 			// everything else
-			memcpy(buf + 3, data + 2, len - 2);
+			if (len > 2)
+				memcpy(buf + 3, data + 2, len - 2);
 
 			++len; // add compressed flag
 		}
@@ -369,7 +370,7 @@ bool Socket::isTimedOut()
 	if (!mTimeOutEnabled)
 		return false;
 	std::chrono::duration<double> diff = std::chrono::system_clock::now() - mTimeoutTimestamp;
-	return diff.count() > 5.0;
+	return diff.count() > SOCKET_TIMEOUT_SECONDS;
 }
 
 bool Socket::loadLibrary()

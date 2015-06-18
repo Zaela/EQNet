@@ -19,7 +19,7 @@ static void setErrFmt(EQNet* net, const char* fmt, va_list args)
 void setFatalErrorMessage(EQNet* net, const char* msg)
 {
 	setErrMsg(net, msg);
-	queueEvent(net, EQNET_FATAL_ERROR);
+	queueEvent(net, EQNET_EVENT_FatalError);
 }
 
 void setFatalErrorMessageFormat(EQNet* net, const char* fmt, ...)
@@ -28,20 +28,20 @@ void setFatalErrorMessageFormat(EQNet* net, const char* fmt, ...)
 	va_start(args, fmt);
 	setErrFmt(net, fmt, args);
 	va_end(args);
-	queueEvent(net, EQNET_FATAL_ERROR);
+	queueEvent(net, EQNET_EVENT_FatalError);
 }
 
-void setInvalidOpMessage(EQNet* net, const char* msg)
+void setErrorMessage(EQNet* net, const char* msg)
 {
 	setErrMsg(net, msg);
-	queueEvent(net, EQNET_INVALID_OPERATION);
+	queueEvent(net, EQNET_EVENT_Error);
 }
 
-void setInvalidOpMessageFormat(EQNet* net, const char* fmt, ...)
+void setErrorMessageFormat(EQNet* net, const char* fmt, ...)
 {
 	va_list args;
 	va_start(args, fmt);
 	setErrFmt(net, fmt, args);
 	va_end(args);
-	queueEvent(net, EQNET_INVALID_OPERATION);
+	queueEvent(net, EQNET_EVENT_Error);
 }

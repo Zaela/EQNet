@@ -27,22 +27,22 @@ uint16_t translateOpcodeFromServer(EQNet* net, uint16_t opcodeIn)
 {
 	switch (net->clientVersion)
 	{
-	case EQNET_CLIENT_TITANIUM:
+	case EQNET_CLIENT_Titanium:
 		return findOpcodeFromServer(opcodeIn, Titanium::toCanonical,
 			sizeof(Titanium::toCanonical) / sizeof(OpCodeTranslation));
-	case EQNET_CLIENT_SECRETS_OF_FAYDWER:
+	case EQNET_CLIENT_SecretsOfFaydwer:
 		return findOpcodeFromServer(opcodeIn, SoF::toCanonical,
 			sizeof(SoF::toCanonical) / sizeof(OpCodeTranslation));
-	case EQNET_CLIENT_SEEDS_OF_DESTRUCTION:
+	case EQNET_CLIENT_SeedsOfDestruction:
 		return findOpcodeFromServer(opcodeIn, SoD::toCanonical,
 			sizeof(SoD::toCanonical) / sizeof(OpCodeTranslation));
-	case EQNET_CLIENT_UNDERFOOT:
+	case EQNET_CLIENT_Underfoot:
 		return findOpcodeFromServer(opcodeIn, Underfoot::toCanonical,
 			sizeof(Underfoot::toCanonical) / sizeof(OpCodeTranslation));
-	case EQNET_CLIENT_REIGN_OF_FEAR:
+	case EQNET_CLIENT_ReignOfFear:
 		return findOpcodeFromServer(opcodeIn, RoF::toCanonical,
 			sizeof(RoF::toCanonical) / sizeof(OpCodeTranslation));
-	case EQNET_CLIENT_REIGN_OF_FEAR2:
+	case EQNET_CLIENT_ReignOfFear2:
 		return findOpcodeFromServer(opcodeIn, RoF2::toCanonical,
 			sizeof(RoF2::toCanonical) / sizeof(OpCodeTranslation));
 	}
@@ -54,22 +54,22 @@ uint16_t translateOpcodeToServer(EQNet* net, uint16_t opcodeIn)
 {
 	switch (net->clientVersion)
 	{
-	case EQNET_CLIENT_TITANIUM:
+	case EQNET_CLIENT_Titanium:
 		return findOpcodeToServer(opcodeIn, Titanium::toCanonical,
 			sizeof(Titanium::toCanonical) / sizeof(OpCodeTranslation));
-	case EQNET_CLIENT_SECRETS_OF_FAYDWER:
+	case EQNET_CLIENT_SecretsOfFaydwer:
 		return findOpcodeToServer(opcodeIn, SoF::toCanonical,
 			sizeof(SoF::toCanonical) / sizeof(OpCodeTranslation));
-	case EQNET_CLIENT_SEEDS_OF_DESTRUCTION:
+	case EQNET_CLIENT_SeedsOfDestruction:
 		return findOpcodeToServer(opcodeIn, SoD::toCanonical,
 			sizeof(SoD::toCanonical) / sizeof(OpCodeTranslation));
-	case EQNET_CLIENT_UNDERFOOT:
+	case EQNET_CLIENT_Underfoot:
 		return findOpcodeToServer(opcodeIn, Underfoot::toCanonical,
 			sizeof(Underfoot::toCanonical) / sizeof(OpCodeTranslation));
-	case EQNET_CLIENT_REIGN_OF_FEAR:
+	case EQNET_CLIENT_ReignOfFear:
 		return findOpcodeToServer(opcodeIn, RoF::toCanonical,
 			sizeof(RoF::toCanonical) / sizeof(OpCodeTranslation));
-	case EQNET_CLIENT_REIGN_OF_FEAR2:
+	case EQNET_CLIENT_ReignOfFear2:
 		return findOpcodeToServer(opcodeIn, RoF2::toCanonical,
 			sizeof(RoF2::toCanonical) / sizeof(OpCodeTranslation));
 	}
@@ -94,9 +94,13 @@ void initNoDeleteOpcodes()
 {
 	memset(noDeleteOpcodes, 0, sizeof(uint32_t) * NO_DELETE_LEN);
 
-	SET(Despawn);
+	// opcodes not handled in initZonePacketHandlers
 	SET(MessageOfTheDay);
-	SET(TimeUpdate);
+}
+
+void setNoDeleteOpcode(uint16_t opcode)
+{
+	noDeleteOpcodes[OpIndex(opcode)] |= OpBit(opcode);
 }
 
 uint32_t isNoDeleteOpcode(uint16_t opcode)

@@ -35,7 +35,7 @@ int EQNet_Poll(EQNet* net, EQNet_Event* ev)
 	for (int i = 0; i < net->eventQueueWritePos; ++i)
 	{
 		EQNet_Event& ev = net->eventQueue[i];
-		if (ev.type != EQNET_ZONE_PACKET)
+		if (ev.type != EQNET_EVENT_Packet)
 			continue;
 
 		if (ev.Packet.packet.data)
@@ -86,7 +86,7 @@ void queueEvent(EQNet* net, int type)
 void queueZonePacketEvent(EQNet* net, uint16_t opcode, uint16_t nativeOpcode, byte* nativeData, uint32_t nativeLen, int count)
 {
 	EQNet_Event* ev = nextEvent(net);
-	ev->type = EQNET_ZONE_PACKET;
+	ev->type = EQNET_EVENT_Packet;
 	ev->Packet.count = count;
 
 	ev->Packet.packet.opcode = opcode;
@@ -100,7 +100,7 @@ void queueZonePacketEvent(EQNet* net, uint16_t opcode, void* data, uint32_t len,
 		uint16_t nativeOpcode, byte* nativeData, uint32_t nativeLen, int count)
 {
 	EQNet_Event* ev = nextEvent(net);
-	ev->type = EQNET_ZONE_PACKET;
+	ev->type = EQNET_EVENT_Packet;
 	ev->Packet.count = count;
 
 	ev->Packet.packet.opcode = opcode;
