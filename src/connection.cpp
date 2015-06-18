@@ -253,6 +253,9 @@ void Connection::processPacketLogin(uint16_t opcode, byte* data, uint32_t len)
 
 void Connection::processPacketWorld(uint16_t opcode, byte* data, uint32_t len)
 {
+	// should probably combine all of these into the "zone" packet handlers
+	// motd and zoneserverinfo likely to be reused in zone
+
 	uint16_t eqnetOpcode = translateOpcodeFromServer(mEQNet, opcode);
 	printf("opcode 0x%0.4X -> 0x%0.4X\n", opcode, eqnetOpcode);
 	switch (eqnetOpcode)

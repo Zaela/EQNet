@@ -342,6 +342,5 @@ void AckManager::startFragSequence(byte* data, uint16_t seq)
 	// some fragmented packets misreport their size by a byte or two,
 	// so this may fail in obscure circumstances
 
-	// find the expected end seq
 	mFragExpectedLen = toHostLong(*(uint32_t*)(data + 4));
 }

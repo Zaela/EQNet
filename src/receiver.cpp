@@ -180,7 +180,7 @@ bool Receiver::validatePacket(byte*& packet, uint32_t& len, uint32_t& offset, bo
 			return true;
 		}
 	}
-	else if (packet[2] == 0xa5) // Not compressed, single byte flag
+	else if (packet[2] == 0xa5) // not compressed
 	{
 		offset = 3;
 		return true;

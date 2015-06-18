@@ -1,6 +1,6 @@
 
-#ifndef _EQNET_EVENT_Packet_H_
-#define _EQNET_EVENT_Packet_H_
+#ifndef _EQNET_PACKET_H_
+#define _EQNET_PACKET_H_
 
 #include <cstdint>
 #include <cstring>
@@ -90,4 +90,4 @@ public:
 	Packet* getFirstPacket() { return mFirstPacket; }
 };
 
-#endif//_EQNET_EVENT_Packet_H_
+#endif//_EQNET_PACKET_H_

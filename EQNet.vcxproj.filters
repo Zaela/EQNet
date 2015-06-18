@@ -105,6 +105,12 @@
     <ClInclude Include="dev\zone.h">
       <Filter>Header Files</Filter>
     </ClInclude>
+    <ClInclude Include="include\eqnet_enums.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="dev\random.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="src\init.cpp">
@@ -159,6 +165,9 @@
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="src\zone.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="src\combat.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
   </ItemGroup>

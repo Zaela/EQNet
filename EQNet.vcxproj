@@ -104,6 +104,7 @@
     <ClInclude Include="dev\opcode_titanium.h" />
     <ClInclude Include="dev\opcode_underfoot.h" />
     <ClInclude Include="dev\packet.h" />
+    <ClInclude Include="dev\random.h" />
     <ClInclude Include="dev\receiver.h" />
     <ClInclude Include="dev\socket.h" />
     <ClInclude Include="dev\stdafx.h" />
@@ -114,11 +115,13 @@
     <ClInclude Include="dev\world.h" />
     <ClInclude Include="dev\zone.h" />
     <ClInclude Include="include\eqnet.h" />
+    <ClInclude Include="include\eqnet_enums.h" />
     <ClInclude Include="include\eqnet_packets.h" />
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="src\ackmgr.cpp" />
     <ClCompile Include="src\address.cpp" />
+    <ClCompile Include="src\combat.cpp" />
     <ClCompile Include="src\compression.cpp" />
     <ClCompile Include="src\connection.cpp" />
     <ClCompile Include="src\crc.cpp" />
