@@ -6,42 +6,44 @@ void EQNet_EnablePacketTranslation(EQNet* net, int setting)
 	net->translateZonePackets = setting ? 1 : 0;
 }
 
+
+
 ////////////////////////////////////////////////////////////////
-// Zone packet handlers
+// Packet handlers
 ////////////////////////////////////////////////////////////////
 
-typedef void(*ZonePacketHandler)(EQNet*, uint16_t, uint16_t, byte*, uint32_t len);
+typedef void(*PacketHandler)(EQNet*, uint16_t, uint16_t, byte*, uint32_t len);
 
-#define HANDLER(name) static void zph##name(EQNet* net, uint16_t eqnetOpcode, uint16_t opcode, byte* data, uint32_t len)
+#define HANDLER(name) static void ph##name(EQNet* net, uint16_t eqnetOpcode, uint16_t opcode, byte* data, uint32_t len)
 
-static std::unordered_map<uint16_t, ZonePacketHandler> gZonePacketHandlers;
+static std::unordered_map<uint16_t, PacketHandler> gPacketHandlers;
 
-void handleZonePacket(EQNet* net, uint16_t opcode, uint16_t nativeOpcode, byte* data, uint32_t len)
+void handlePacket(EQNet* net, uint16_t opcode, uint16_t nativeOpcode, byte* data, uint32_t len)
 {
 #ifdef EQNET_DEBUG
 	printf("opcode 0x%0.4X-> 0x%0.4X\n", nativeOpcode, opcode);
 #endif
 
-	if (gZonePacketHandlers.count(opcode))
-		gZonePacketHandlers[opcode](net, opcode, nativeOpcode, data, len);
+	if (gPacketHandlers.count(opcode))
+		gPacketHandlers[opcode](net, opcode, nativeOpcode, data, len);
 	else
-		queueZonePacketEvent(net, opcode, nativeOpcode, data, len);
+		queuePacketEvent(net, opcode, nativeOpcode, data, len);
 }
 
 HANDLER(ReuseNative)
 {
-	queueZonePacketEvent(net, eqnetOpcode, data, len, opcode, data, len);
+	queuePacketEvent(net, eqnetOpcode, data, len, opcode, data, len);
 }
 
 HANDLER(ReuseFourByteToTwo)
 {
-	queueZonePacketEvent(net, eqnetOpcode, data + 2, len - 2, opcode, data, len);
+	queuePacketEvent(net, eqnetOpcode, data + 2, len - 2, opcode, data, len);
 }
 
 #define PREAMBLE do { \
     if (!net->translateZonePackets) \
     { \
-        queueZonePacketEvent(net, eqnetOpcode, opcode, data, len); \
+        queuePacketEvent(net, eqnetOpcode, opcode, data, len); \
 		return; \
     } } while(0)
 
@@ -50,8 +52,61 @@ HANDLER(ReuseFourByteToTwo)
 #define PACKET_SIZE(sname) sizeof(PACKET(sname))
 #define ALLOC_STRUCT(var, sname) PACKET(sname)* var = new PACKET(sname)
 #define ALLOC_STRUCT_ARRAY(var, sname, c) PACKET(sname)* var = new PACKET(sname)[c]
-#define QUEUE_STRUCT(var, sname) queueZonePacketEvent(net, eqnetOpcode, var, PACKET_SIZE(sname), opcode, data, len)
-#define QUEUE_STRUCT_ARRAY(var, sname, c) queueZonePacketEvent(net, eqnetOpcode, var, PACKET_SIZE(sname) * c, opcode, data, len, c)
+#define QUEUE_STRUCT(var, sname) queuePacketEvent(net, eqnetOpcode, var, PACKET_SIZE(sname), opcode, data, len)
+#define QUEUE_STRUCT_ARRAY(var, sname, c) queuePacketEvent(net, eqnetOpcode, var, PACKET_SIZE(sname) * c, opcode, data, len, c)
+
+/////////////////////////////////////////////
+// Packets received on the way to char select
+/////////////////////////////////////////////
+HANDLER(GuildsList)
+{
+	readGuilds(net, data, len);
+}
+
+HANDLER(SendCharInfo)
+{
+	readCharSelectCharacters(net, data, len);
+
+	net->connection->setTimeoutEnabled(false);
+	net->mode = MODE_CHAR_SELECT;
+	queueEvent(net, EQNET_EVENT_AtCharacterSelect);
+}
+
+HANDLER(LogServer)
+{
+	const char* shortname = (char*)(data + 32);
+	size_t slen = strlen(shortname) + 1;
+
+	char* str = new char[slen];
+	memcpy(str, shortname, slen);
+
+	if (net->serverShortName)
+		delete[] net->serverShortName;
+	net->serverShortName = str;
+}
+
+/////////////////////////////////////////////
+// Packets received before zoning in
+/////////////////////////////////////////////
+HANDLER(ZoneUnavailable)
+{
+	queueEvent(net, EQNET_EVENT_ZoneUnavailable);
+}
+
+HANDLER(ZoneServerInfo)
+{
+	// struct seems to be the same for all client versions
+	Titanium::ZoneServerInfo_Struct* zs = (Titanium::ZoneServerInfo_Struct*)data;
+
+	Address addr;
+	addr.ip = zs->ip;
+	addr.port = zs->port;
+
+	recordAddress(net->addressZone, addr);
+
+	net->mode = MODE_WORLD_TO_ZONE;
+	net->connection->sessionHandoff(addr);
+}
 
 /////////////////////////////////////////////
 // Packets received while zoning in
@@ -62,7 +117,7 @@ HANDLER(PlayerProfile)
 
 	// translate
 
-	queueZonePacketEvent(net, eqnetOpcode, nullptr, 0, opcode, data, len);
+	queuePacketEvent(net, eqnetOpcode, nullptr, 0, opcode, data, len);
 }
 
 HANDLER(WeatherUpdate)
@@ -147,12 +202,20 @@ HANDLER(HpUpdatePercent)
 }
 
 // handler must have same name as EQNET_OP_
-#define SET(handler) gZonePacketHandlers[EQNET_OP_##handler] = zph##handler
-#define REUSE(name) gZonePacketHandlers[EQNET_OP_##name] = zphReuseNative; setNoDeleteOpcode(EQNET_OP_##name)
-#define REUSE_4BYTEto2BYTE(name) gZonePacketHandlers[EQNET_OP_##name] = zphReuseFourByteToTwo; setNoDeleteOpcode(EQNET_OP_##name)
+#define SET(handler) gPacketHandlers[EQNET_OP_##handler] = ph##handler
+#define REUSE(name) gPacketHandlers[EQNET_OP_##name] = phReuseNative; setNoDeleteOpcode(EQNET_OP_##name)
+#define REUSE_4BYTEto2BYTE(name) gPacketHandlers[EQNET_OP_##name] = phReuseFourByteToTwo; setNoDeleteOpcode(EQNET_OP_##name)
 
-void initZonePacketHandlers()
+void initPacketHandlers()
 {
+	SET(GuildsList);
+	SET(SendCharInfo);
+	SET(LogServer);
+
+	SET(ZoneUnavailable);
+	REUSE(MessageOfTheDay);
+	SET(ZoneServerInfo);
+
 	SET(PlayerProfile);
 	SET(WeatherUpdate);
 	SET(ZoneData);
@@ -170,9 +233,9 @@ void initZonePacketHandlers()
 	REUSE(TimeUpdate);
 }
 
-void deinitZonePacketHandlers()
+void deinitPacketHandlers()
 {
-	gZonePacketHandlers.clear();
+	gPacketHandlers.clear();
 }
 
 #undef ALLOC_STRUCT

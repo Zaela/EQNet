@@ -13,10 +13,8 @@ class Connection : public ProtocolReceiver
 private:
 	void processPackets();
 	void processPacketLogin(uint16_t opcode, byte* data, uint32_t len);
-	void processPacketWorld(uint16_t opcode, byte* data, uint32_t len);
-	void processPacketZone(uint16_t opcode, byte* data, uint32_t len);
+	void processPacketWorldZone(uint16_t opcode, byte* data, uint32_t len);
 
-	void sessionHandoff(Address& addr);
 	bool retry();
 
 public:
@@ -25,6 +23,7 @@ public:
 
 	void initiateSession();
 	void pump();
+	void sessionHandoff(Address& addr);
 };
 
 #endif//_EQNET_CONNECTION_H_

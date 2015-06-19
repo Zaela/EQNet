@@ -114,7 +114,7 @@
     <ClInclude Include="dev\structs_underfoot.h" />
     <ClInclude Include="dev\util.h" />
     <ClInclude Include="dev\world.h" />
-    <ClInclude Include="dev\zone.h" />
+    <ClInclude Include="dev\packet_handlers.h" />
     <ClInclude Include="include\eqnet.h" />
     <ClInclude Include="include\eqnet_enums.h" />
     <ClInclude Include="include\eqnet_packets.h" />
@@ -143,7 +143,7 @@
     </ClCompile>
     <ClCompile Include="src\util.cpp" />
     <ClCompile Include="src\world.cpp" />
-    <ClCompile Include="src\zone.cpp" />
+    <ClCompile Include="src\packet_handlers.cpp" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

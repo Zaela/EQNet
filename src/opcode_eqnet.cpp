@@ -96,9 +96,6 @@ static uint32_t noDeleteOpcodes[NO_DELETE_LEN];
 void initNoDeleteOpcodes()
 {
 	memset(noDeleteOpcodes, 0, sizeof(uint32_t) * NO_DELETE_LEN);
-
-	// opcodes not handled in initZonePacketHandlers
-	SET(MessageOfTheDay);
 }
 
 void setNoDeleteOpcode(uint16_t opcode)

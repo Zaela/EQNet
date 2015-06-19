@@ -83,7 +83,7 @@ void queueEvent(EQNet* net, int type)
 	ev->type = type;
 }
 
-void queueZonePacketEvent(EQNet* net, uint16_t opcode, uint16_t nativeOpcode, byte* nativeData, uint32_t nativeLen, int count)
+void queuePacketEvent(EQNet* net, uint16_t opcode, uint16_t nativeOpcode, byte* nativeData, uint32_t nativeLen, int count)
 {
 	EQNet_Event* ev = nextEvent(net);
 	ev->type = EQNET_EVENT_Packet;
@@ -96,7 +96,7 @@ void queueZonePacketEvent(EQNet* net, uint16_t opcode, uint16_t nativeOpcode, by
 	ev->Packet.nativePacket.len = nativeLen;
 }
 
-void queueZonePacketEvent(EQNet* net, uint16_t opcode, void* data, uint32_t len,
+void queuePacketEvent(EQNet* net, uint16_t opcode, void* data, uint32_t len,
 		uint16_t nativeOpcode, byte* nativeData, uint32_t nativeLen, int count)
 {
 	EQNet_Event* ev = nextEvent(net);

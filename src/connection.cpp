@@ -98,23 +98,11 @@ void Connection::processPackets()
 
 		byte* data = packet->data + offset;
 		uint32_t len = packet->len - offset;
-		
-		switch (mEQNet->mode)
-		{
-		case MODE_LOGIN:
-		case MODE_SERVER_SELECT:
+
+		if (mEQNet->mode >= MODE_LOGIN_TO_WORLD)
+			processPacketWorldZone(opcode, data, len);
+		else
 			processPacketLogin(opcode, data, len);
-			break;
-		case MODE_LOGIN_TO_WORLD:
-		case MODE_CHAR_SELECT:
-			processPacketWorld(opcode, data, len);
-			break;
-		case MODE_WORLD_TO_ZONE:
-		case MODE_ZONE_TO_ZONE:
-		case MODE_ZONE:
-			processPacketZone(opcode, data, len);
-			break;
-		}
 		
 		delete packet;
 	}
@@ -261,102 +249,10 @@ void Connection::processPacketLogin(uint16_t opcode, byte* data, uint32_t len)
 	}
 }
 
-void Connection::processPacketWorld(uint16_t opcode, byte* data, uint32_t len)
-{
-	// should probably combine all of these into the "zone" packet handlers
-	// motd and zoneserverinfo likely to be reused in zone
-
-	uint16_t eqnetOpcode = translateOpcodeFromServer(mEQNet, opcode);
-
-#ifdef EQNET_DEBUG
-	printf("opcode 0x%0.4X -> 0x%0.4X\n", opcode, eqnetOpcode);
-#endif
-
-	switch (eqnetOpcode)
-	{
-	// packets on the way to char select
-	case EQNET_OP_GuildsList:
-	{
-		readGuilds(mEQNet, data, len);
-		break;
-	}
-
-	case EQNET_OP_SendCharInfo:
-	{
-		readCharSelectCharacters(mEQNet, data, len);
-
-		setTimeoutEnabled(false);
-		mEQNet->mode = MODE_CHAR_SELECT;
-		queueEvent(mEQNet, EQNET_EVENT_AtCharacterSelect);
-		break;
-	}
-
-	case EQNET_OP_LogServer:
-	{
-		const char* shortname = (char*)(data + 32);
-		size_t len = strlen(shortname) + 1;
-
-		char* str = new char[len];
-		memcpy(str, shortname, len);
-
-		if (mEQNet->serverShortName)
-			delete[] mEQNet->serverShortName;
-		mEQNet->serverShortName = str;
-		break;
-	}
-
-	case EQNET_OP_ApproveWorld:
-	case EQNET_OP_EnterWorld:
-	case EQNET_OP_PostEnterWorld:
-	case EQNET_OP_ExpansionInfo:
-		break;
-
-	// packets on the way to zone
-	case EQNET_OP_ZoneUnavailable:
-		queueEvent(mEQNet, EQNET_EVENT_ZoneUnavailable);
-		break;
-
-	case EQNET_OP_MessageOfTheDay:
-		// plain cstring
-		queueZonePacketEvent(mEQNet, eqnetOpcode, data, len,
-			opcode, data, len);
-		break;
-
-	case EQNET_OP_SetChatServer:
-	case EQNET_OP_SetChatServer2:
-		break;
-
-	case EQNET_OP_ZoneServerInfo:
-	{
-		// struct seems to be the same for all client versions
-		Titanium::ZoneServerInfo_Struct* zs = (Titanium::ZoneServerInfo_Struct*)data;
-
-		Address addr;
-		addr.ip = zs->ip;
-		addr.port = zs->port;
-
-		recordAddress(mEQNet->addressZone, addr);
-
-		mEQNet->mode = MODE_WORLD_TO_ZONE;
-		sessionHandoff(addr);
-		break;
-	}
-
-#ifdef EQNET_DEBUG
-	default:
-		printf("unhandled world opcode: 0x%0.4X\n", opcode);
-		for (uint32_t i = 0; i < len; ++i)
-			printf("%0.2X ", data[i]);
-		printf("\n");
-		break;
-#endif
-	}
-}
-
-void Connection::processPacketZone(uint16_t opcode, byte* data, uint32_t len)
+void Connection::processPacketWorldZone(uint16_t opcode, byte* data, uint32_t len)
 {
 	uint16_t eqnetOpcode = translateOpcodeFromServer(mEQNet, opcode);
 
 	if (eqnetOpcode != EQNET_OP_NONE)
-		handleZonePacket(mEQNet, eqnetOpcode, opcode, data, len);
+		handlePacket(mEQNet, eqnetOpcode, opcode, data, len);
 };

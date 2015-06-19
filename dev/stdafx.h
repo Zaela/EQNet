@@ -15,7 +15,7 @@
 #include "connection.h"
 #include "login.h"
 #include "world.h"
-#include "zone.h"
+#include "packet_handlers.h"
 #include "error.h"
 #include "socket.h"
 #include "util.h"

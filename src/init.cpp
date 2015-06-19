@@ -4,7 +4,7 @@
 int EQNet_Init()
 {
 	initNoDeleteOpcodes();
-	initZonePacketHandlers();
+	initPacketHandlers();
 #ifdef _WIN32
 	return Socket::loadLibrary();
 #else
@@ -14,7 +14,7 @@ int EQNet_Init()
 
 void EQNet_Close()
 {
-	deinitZonePacketHandlers();
+	deinitPacketHandlers();
 #ifdef _WIN32
 	Socket::closeLibrary();
 #endif
