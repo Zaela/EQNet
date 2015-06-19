@@ -38,12 +38,12 @@ int EQNet_Poll(EQNet* net, EQNet_Event* ev)
 		if (ev.type != EQNET_EVENT_Packet)
 			continue;
 
-		if (ev.Packet.packet.data)
+		if (ev.packet.data)
 		{
-			if (!isNoDeleteOpcode(ev.Packet.packet.opcode))
+			if (!isNoDeleteOpcode(ev.packet.opcode))
 			{
-				checkSpecialDestructor(ev.Packet.packet);
-				delete[] ev.Packet.packet.data;
+				checkSpecialDestructor(ev.packet);
+				delete[] ev.packet.data;
 			}
 		}
 	}
@@ -87,13 +87,13 @@ void queuePacketEvent(EQNet* net, uint16_t opcode, uint16_t nativeOpcode, byte* 
 {
 	EQNet_Event* ev = nextEvent(net);
 	ev->type = EQNET_EVENT_Packet;
-	ev->Packet.count = count;
+	ev->count = count;
 
-	ev->Packet.packet.opcode = opcode;
+	ev->packet.opcode = opcode;
 
-	ev->Packet.nativePacket.opcode = nativeOpcode;
-	ev->Packet.nativePacket.data = nativeData;
-	ev->Packet.nativePacket.len = nativeLen;
+	ev->nativePacket.opcode = nativeOpcode;
+	ev->nativePacket.data = nativeData;
+	ev->nativePacket.len = nativeLen;
 }
 
 void queuePacketEvent(EQNet* net, uint16_t opcode, void* data, uint32_t len,
@@ -101,13 +101,13 @@ void queuePacketEvent(EQNet* net, uint16_t opcode, void* data, uint32_t len,
 {
 	EQNet_Event* ev = nextEvent(net);
 	ev->type = EQNET_EVENT_Packet;
-	ev->Packet.count = count;
+	ev->count = count;
 
-	ev->Packet.packet.opcode = opcode;
-	ev->Packet.packet.data = (byte*)data;
-	ev->Packet.packet.len = len;
+	ev->packet.opcode = opcode;
+	ev->packet.data = (byte*)data;
+	ev->packet.len = len;
 
-	ev->Packet.nativePacket.opcode = nativeOpcode;
-	ev->Packet.nativePacket.data = nativeData;
-	ev->Packet.nativePacket.len = nativeLen;
+	ev->nativePacket.opcode = nativeOpcode;
+	ev->nativePacket.data = nativeData;
+	ev->nativePacket.len = nativeLen;
 }

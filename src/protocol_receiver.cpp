@@ -80,7 +80,7 @@ void ProtocolReceiver::readPacket(byte* data, uint32_t len, bool fromCombined)
 			sendRaw(data, len);
 			setAutoAckEnabled(true);
 
-			// struct seems to be the same for all client versions
+			// struct seems to be the same for all client versions (except RoF+ is slightly longer)
 			Packet* packet = new Packet(mEQNet,
 				mEQNet->clientVersion <= EQNET_CLIENT_Underfoot ? 
 					sizeof(Titanium::ClientZoneEntry_Struct) : sizeof(RoF::ClientZoneEntry_Struct),

@@ -162,13 +162,10 @@ struct EQNet_Packet
 struct EQNet_Event
 {
 	int type;
-	union {
-		struct {
-			int count;
-			EQNet_Packet packet;
-			EQNet_Packet nativePacket;
-		} Packet;
-	};
+
+	int count;
+	EQNet_Packet packet;
+	EQNet_Packet nativePacket;
 };
 
 #ifdef __cplusplus
