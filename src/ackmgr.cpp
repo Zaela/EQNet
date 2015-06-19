@@ -115,13 +115,12 @@ void AckManager::checkInboundPacket(byte* packet, uint32_t len, uint32_t off)
 	case SEQUENCE_FUTURE:
 	{
 		// future packet: remember it for later
+		if (mFuturePackets[seq])
+			delete mFuturePackets[seq];
 		mFuturePackets[seq] = new ReadPacket(packet, len);
 		break;
 	}
-	case SEQUENCE_PAST:
-		//sendOutOfOrderRequest(seq);
-		break;
-	}
+	} // switch
 }
 
 void AckManager::checkInboundFragment(byte* packet, uint32_t len)
@@ -155,10 +154,7 @@ void AckManager::checkInboundFragment(byte* packet, uint32_t len)
 		}
 		break;
 	}
-	case SEQUENCE_PAST:
-		//sendOutOfOrderRequest(seq);
-		break;
-	}
+	} // switch
 }
 
 int AckManager::copyFragment(ReadPacket* out, int outOffset, uint16_t i, int offset)
@@ -267,13 +263,6 @@ void AckManager::sendSessionRequest()
 
 void AckManager::sendSessionDisconnect()
 {
-	struct SessionDisconnect
-	{
-		uint16_t opcode;
-		uint32_t sessionID;
-		uint16_t crc;
-	};
-
 	SessionDisconnect sd;
 
 	sd.opcode = toNetworkShort(OP_SessionDisconnect);
@@ -293,6 +282,12 @@ void AckManager::sendMaxTimeoutLengthRequest()
 	ss.average_delta = toNetworkLong(25);
 
 	sendRaw(&ss, sizeof(SessionStat));
+}
+
+void AckManager::sendOutOfOrderRequest()
+{
+	Packet* p = new Packet(nullptr, 2, OP_NONE, false, OP_OutOfOrder);
+	*(uint16_t*)p->getDataBuffer() = mExpectedSeq;
 }
 
 void AckManager::queueRawPacket(byte* packet, uint32_t len)

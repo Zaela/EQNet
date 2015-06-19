@@ -33,6 +33,22 @@ enum Unexposed_OpCodes
 	EQNET_OP_ReqNewZone,
 	EQNET_OP_ReqClientSpawn,
 	EQNET_OP_ClientReady,
+	/* Toggles */
+	EQNET_OP_AutoAttack,
+	EQNET_OP_AutoFire,
+	/* Targetting */
+	EQNET_OP_TargetCommand,
+	/* Skills */
+	EQNET_OP_CombatAbility,
+	EQNET_OP_Hide,
+	EQNET_OP_Sneak,
+	EQNET_OP_Forage,
+	EQNET_OP_Begging,
+	EQNET_OP_Taunt,
+	EQNET_OP_SenseHeading,
+	EQNET_OP_SenseTraps,
+	EQNET_OP_DisarmTraps,
+	EQNET_OP_Fishing,
 	EQNET_OP_INTERNAL_MAX_COUNT
 };
 

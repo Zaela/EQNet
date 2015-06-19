@@ -2,13 +2,13 @@
 #ifndef _EQNET_CONNECTION_H_
 #define _EQNET_CONNECTION_H_
 
-#include "receiver.h"
+#include "protocol_receiver.h"
 #include <string>
 #include <chrono>
 
 struct EQNet;
 
-class Connection : public Receiver
+class Connection : public ProtocolReceiver
 {
 private:
 	void processPackets();

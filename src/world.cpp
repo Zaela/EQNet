@@ -208,12 +208,14 @@ void readCharSelectCharacters(EQNet* net, byte* data, uint32_t len)
 	case EQNET_CLIENT_SecretsOfFaydwer:
 	case EQNET_CLIENT_SeedsOfDestruction:
 	case EQNET_CLIENT_Underfoot:
-	case EQNET_CLIENT_ReignOfFear:
-	case EQNET_CLIENT_ReignOfFear2:
 	{
 		Underfoot::CharacterSelect_Struct* cs = (Underfoot::CharacterSelect_Struct*)data;
 
 		delCharList(net);
+
+		if (cs->CharCount == 0)
+			break;
+
 		EQNet_Character* list = allocCharList(net, cs->CharCount);
 
 		uint32_t pos = sizeof(Underfoot::CharacterSelect_Struct);
@@ -240,6 +242,41 @@ void readCharSelectCharacters(EQNet* net, byte* data, uint32_t len)
 			pos += sizeof(Underfoot::CharacterSelectEntryB_Struct);
 		}
 
+		break;
+	}
+
+	case EQNET_CLIENT_ReignOfFear:
+	case EQNET_CLIENT_ReignOfFear2:
+	{
+		RoF::CharacterSelect_Struct* cs = (RoF::CharacterSelect_Struct*)data;
+
+		delCharList(net);
+
+		if (cs->CharCount == 0)
+			break;
+
+		EQNet_Character* list = allocCharList(net, cs->CharCount);
+
+		uint32_t pos = sizeof(RoF::CharacterSelect_Struct);
+
+		for (uint32_t i = 0; i < cs->CharCount; ++i)
+		{
+			const char* name = (const char*)(data + pos);
+			Util::strcpy(list->name, name, 64);
+			pos += strlen(name) + 1;
+
+			RoF::CharacterSelectEntry_Struct* cse = (RoF::CharacterSelectEntry_Struct*)(data + pos);
+			list->level = cse->Level;
+			list->charClass = cse->Class;
+			list->gender = cse->Gender;
+			list->race = cse->Race;
+			list->deity = cse->Deity;
+			list->zoneId = cse->Zone;
+			list->instanceId = cse->Instance;
+
+			pos += sizeof(RoF::CharacterSelectEntry_Struct);
+			++list;
+		}
 		break;
 	}
 	} // switch

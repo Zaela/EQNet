@@ -11,7 +11,7 @@
 #include "compression.h"
 #include "network_protocol.h"
 #include "ackmgr.h"
-#include "receiver.h"
+#include "protocol_receiver.h"
 #include "connection.h"
 #include "login.h"
 #include "world.h"
@@ -24,6 +24,7 @@
 #include "structs_login.h"
 #include "structs_titanium.h"
 #include "structs_underfoot.h"
+#include "structs_rof.h"
 
 #include "opcode_eqnet.h"
 #include "opcode_login.h"

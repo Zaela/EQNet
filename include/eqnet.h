@@ -57,6 +57,7 @@ EQNET_API void      EQNet_Destroy(EQNet*);
 EQNET_API void                EQNet_SetClientVersion(EQNet*, EQNet_ClientVersion version);
 EQNET_API EQNet_ClientVersion EQNet_GetClientVersion(EQNet*);
 EQNET_API void                EQNet_SetMaxRetries(EQNet*, uint32_t count);
+EQNET_API void                EQNet_EnablePacketTranslation(EQNet*, EQNetBOOL setting);
 
 /*
 ** Errors
@@ -92,8 +93,6 @@ EQNET_API const EQNet_Character*    EQNet_GetCharacterList(EQNet*, int* count);
 ** Zone
 */
 
-EQNET_API void EQNet_EnablePacketTranslation(EQNet*, EQNetBOOL setting);
-
 /*
 ** Combat
 */
@@ -110,8 +109,7 @@ EQNET_API void EQNet_UseSkill(EQNet*, EQNet_Skill skill, EQNet_Id target EQNET_D
 */
 
 EQNET_API void EQNet_KeepAlive(EQNet*);
-EQNET_API void EQNet_SendRawPacket(EQNet*, uint16_t opcode, const void* data, uint32_t len);
-EQNET_API void EQNet_SendRawPacketNativeOpcode(EQNet*, uint16_t opcode, const void* data, uint32_t len);
+EQNET_API void EQNet_SendRawPacket(EQNet*, uint16_t opcode, const void* data, uint32_t len, EQNetBOOL isNativeOpcode EQNET_DEFAULT(0));
 EQNET_API void EQNet_SendRawBytes(EQNet*, const void* data, uint32_t len);
 
 /*

@@ -46,6 +46,20 @@ private:
 
 private:
 	int copyFragment(ReadPacket* out, int outOffset, uint16_t i, int offset = 4);
+	void checkFragmentComplete();
+	void checkAfterPacket();
+	void startFragSequence(byte* data, uint16_t seq);
+	bool resendUnackedPackets();
+	void sendOutOfOrderRequest();
+
+protected:
+	void receiveAck(uint16_t seq);
+	void checkInboundPacket(byte* packet, uint32_t len, uint32_t off = 2);
+	void checkInboundFragment(byte* packet, uint32_t len);
+	void queueRawPacket(byte* data, uint32_t len);
+	void resetAcks();
+
+	bool hasQueuedPackets() { return !mReadPacketQueue.empty(); }
 
 public:
 	AckManager(EQNet* net);
@@ -54,29 +68,15 @@ public:
 
 	uint32_t getSessionID() { return mSessionID; }
 
-	void receiveAck(uint16_t seq);
 	void sendAck(uint16_t seq);
 	void sendKeepAliveAck();
 	void sendAckNoQueue(uint16_t seq);
 	void sendKeepAliveAckNoQueue();
 	void setAutoAckEnabled(bool to) { mAutoAckEnabled = to; }
 
-	void checkInboundPacket(byte* packet, uint32_t len, uint32_t off = 2);
-	void checkInboundFragment(byte* packet, uint32_t len);
-	void checkFragmentComplete();
-	void checkAfterPacket();
-
-	void queueRawPacket(byte* data, uint32_t len);
-	bool resendUnackedPackets();
-	void startFragSequence(byte* data, uint16_t seq);
-
 	void sendSessionRequest();
 	void sendSessionDisconnect();
 	void sendMaxTimeoutLengthRequest();
-
-	void resetAcks();
-
-	bool hasQueuedPackets() { return !mReadPacketQueue.empty(); }
 };
 
 #endif//_EQNET_ACKMGR_H_

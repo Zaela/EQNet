@@ -18,7 +18,10 @@ static std::unordered_map<uint16_t, ZonePacketHandler> gZonePacketHandlers;
 
 void handleZonePacket(EQNet* net, uint16_t opcode, uint16_t nativeOpcode, byte* data, uint32_t len)
 {
+#ifdef EQNET_DEBUG
 	printf("opcode 0x%0.4X-> 0x%0.4X\n", nativeOpcode, opcode);
+#endif
+
 	if (gZonePacketHandlers.count(opcode))
 		gZonePacketHandlers[opcode](net, opcode, nativeOpcode, data, len);
 	else
@@ -28,6 +31,11 @@ void handleZonePacket(EQNet* net, uint16_t opcode, uint16_t nativeOpcode, byte* 
 HANDLER(ReuseNative)
 {
 	queueZonePacketEvent(net, eqnetOpcode, data, len, opcode, data, len);
+}
+
+HANDLER(ReuseFourByteToTwo)
+{
+	queueZonePacketEvent(net, eqnetOpcode, data + 2, len - 2, opcode, data, len);
 }
 
 #define PREAMBLE do { \
@@ -98,6 +106,25 @@ HANDLER(SetExperience)
 /////////////////////////////////////////////
 // Packets received while in-zone
 /////////////////////////////////////////////
+HANDLER(Consider)
+{
+	PREAMBLE;
+	ALLOC_STRUCT(con, Consider);
+
+	switch (net->clientVersion)
+	{
+	case EQNET_CLIENT_Titanium:
+	{
+		CAST(src, Titanium::Consider_Struct);
+		con->mobId = src->targetid;
+		//con-> handle faction and color con translation
+		break;
+	}
+	} // switch
+
+	QUEUE_STRUCT(con, Consider);
+}
+
 HANDLER(HpUpdateExact)
 {
 	PREAMBLE;
@@ -119,28 +146,10 @@ HANDLER(HpUpdatePercent)
 	QUEUE_STRUCT(hp, HpUpdatePercent);
 }
 
-HANDLER(Consider)
-{
-	PREAMBLE;
-	ALLOC_STRUCT(con, Consider);
-
-	switch (net->clientVersion)
-	{
-	case EQNET_CLIENT_Titanium:
-	{
-		CAST(src, Titanium::Consider_Struct);
-		con->mobId = src->targetid;
-		//con-> handle faction and color con translation
-		break;
-	}
-	} // switch
-
-	QUEUE_STRUCT(con, Consider);
-}
-
 // handler must have same name as EQNET_OP_
 #define SET(handler) gZonePacketHandlers[EQNET_OP_##handler] = zph##handler
 #define REUSE(name) gZonePacketHandlers[EQNET_OP_##name] = zphReuseNative; setNoDeleteOpcode(EQNET_OP_##name)
+#define REUSE_4BYTEto2BYTE(name) gZonePacketHandlers[EQNET_OP_##name] = zphReuseFourByteToTwo; setNoDeleteOpcode(EQNET_OP_##name)
 
 void initZonePacketHandlers()
 {
@@ -149,12 +158,15 @@ void initZonePacketHandlers()
 	SET(ZoneData);
 	SET(SetExperience);
 
+	SET(Consider);
 	SET(HpUpdateExact);
 	SET(HpUpdatePercent);
-	SET(Consider);
 
-	REUSE(Assist);
-	REUSE(Despawn);
+	REUSE_4BYTEto2BYTE(Assist);
+	REUSE_4BYTEto2BYTE(Despawn);
+	REUSE_4BYTEto2BYTE(TargetsTarget);
+
+	REUSE(MoneyUpdate);
 	REUSE(TimeUpdate);
 }
 

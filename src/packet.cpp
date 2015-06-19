@@ -1,7 +1,7 @@
 
 #include "stdafx.h"
 
-Packet::Packet(EQNet* net, uint32_t data_len, uint16_t opcode, bool hasSequence, int protocol_opcode) :
+Packet::Packet(EQNet* net, uint32_t data_len, uint16_t opcode, bool hasSequence, uint16_t protocol_opcode) :
 	mNoDelete(false),
 	mHasSeq(hasSequence),
 	mBuffer(nullptr)
@@ -10,7 +10,12 @@ Packet::Packet(EQNet* net, uint32_t data_len, uint16_t opcode, bool hasSequence,
 	uint8_t dataPos = 6;
 	uint8_t opOffset = 0;
 
-	if (!mHasSeq)
+	if (protocol_opcode == OP_NONE)
+	{
+		len -= 4;
+		dataPos = 2;
+	}
+	else if (!mHasSeq)
 	{
 		len -= 2;
 		dataPos = 4;
@@ -19,7 +24,7 @@ Packet::Packet(EQNet* net, uint32_t data_len, uint16_t opcode, bool hasSequence,
 	// opcodes with a low-order byte of 0 are preceded with an extra 0 byte
 	if (opcode != OP_NONE && (opcode & 0x00ff) == 0)
 	{
-		opOffset = 1;
+		++dataPos;
 		++len;
 	}
 
@@ -31,14 +36,16 @@ Packet::Packet(EQNet* net, uint32_t data_len, uint16_t opcode, bool hasSequence,
 	mDataPos = dataPos;
 	mBuffer = buf;
 
-	uint16_t* ptr = (uint16_t*)buf;
-	*ptr = toNetworkShort(protocol_opcode);
+	if (protocol_opcode != OP_NONE)
+	{
+		*(uint16_t*)buf = toNetworkShort(protocol_opcode);
+	}
 
 	if (opcode != OP_NONE)
 	{
 		if (net)
 			opcode = translateOpcodeToServer(net, opcode);
-		ptr[(mHasSeq ? 2 : 1) + opOffset] = opcode;
+		*(uint16_t*)(buf + dataPos - 2) = opcode;
 	}
 	else
 	{

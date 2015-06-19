@@ -1,12 +1,12 @@
 
-#ifndef _EQNET_RECEIVER_H_
-#define _EQNET_RECEIVER_H_
+#ifndef _EQNET_PROTOCOL_RECEIVER_H_
+#define _EQNET_PROTOCOL_RECEIVER_H_
 
 #include <cstdint>
 #include "main.h"
 #include "ackmgr.h"
 
-class Receiver : public AckManager
+class ProtocolReceiver : public AckManager
 {
 private:
 	uint32_t mAccountID;
@@ -17,7 +17,7 @@ private:
 	void readPacket(byte* data, uint32_t len, bool fromCombined = false);
 
 protected:
-	Receiver(EQNet* net);
+	ProtocolReceiver(EQNet* net);
 
 	bool handleProtocol(uint32_t len);
 	void setAccountID(uint32_t id) { mAccountID = id; }
@@ -26,4 +26,4 @@ protected:
 	std::string getSessionKey() const { return mSessionKey; }
 };
 
-#endif//_EQNET_RECEIVER_H_
+#endif//_EQNET_PROTOCOL_RECEIVER_H_

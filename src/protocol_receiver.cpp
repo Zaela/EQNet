@@ -1,19 +1,19 @@
 
 #include "stdafx.h"
 
-Receiver::Receiver(EQNet* net)
+ProtocolReceiver::ProtocolReceiver(EQNet* net)
 	: AckManager(net)
 {
 
 }
 
-bool Receiver::handleProtocol(uint32_t len)
+bool ProtocolReceiver::handleProtocol(uint32_t len)
 {
 	readPacket(getBuffer(), len);
 	return hasQueuedPackets();
 }
 
-void Receiver::readPacket(byte* data, uint32_t len, bool fromCombined)
+void ProtocolReceiver::readPacket(byte* data, uint32_t len, bool fromCombined)
 {
 	uint16_t opcode = toHostShort(*(uint16_t*)data);
 
@@ -30,7 +30,9 @@ void Receiver::readPacket(byte* data, uint32_t len, bool fromCombined)
 	{
 	case OP_SessionResponse:
 	{
+#ifdef EQNET_DEBUG
 		printf("OP_SessionResponse\n");
+#endif
 		SessionResponse* sr = (SessionResponse*)(data + 2);
 		uint32_t crcKey = toHostLong(sr->key);
 
@@ -79,7 +81,10 @@ void Receiver::readPacket(byte* data, uint32_t len, bool fromCombined)
 			setAutoAckEnabled(true);
 
 			// struct seems to be the same for all client versions
-			Packet* packet = new Packet(mEQNet, sizeof(Titanium::ClientZoneEntry_Struct), EQNET_OP_PlayerSpawn);
+			Packet* packet = new Packet(mEQNet,
+				mEQNet->clientVersion <= EQNET_CLIENT_Underfoot ? 
+					sizeof(Titanium::ClientZoneEntry_Struct) : sizeof(RoF::ClientZoneEntry_Struct),
+				EQNET_OP_PlayerSpawn);
 			Titanium::ClientZoneEntry_Struct* cze = (Titanium::ClientZoneEntry_Struct*)packet->getDataBuffer();
 
 			Util::strcpy(cze->char_name, mEQNet->selectedCharacter->name, 64);
@@ -95,7 +100,9 @@ void Receiver::readPacket(byte* data, uint32_t len, bool fromCombined)
 			break;
 		}
 
+#ifdef EQNET_DEBUG
 		printf("server CRC key: %i (0x%0.8X)\n", getCRCKey(), getCRCKey());
+#endif
 		break;
 	}
 
@@ -155,6 +162,7 @@ void Receiver::readPacket(byte* data, uint32_t len, bool fromCombined)
 	case OP_SessionStatResponse:
 		break;
 
+#ifdef EQNET_DEBUG
 	default:
 		printf("Receiver received unknown protocol opcode 0x%0.4X len: %u, fromCombined: %i\n", opcode,
 			len, fromCombined ? 1 : 0);
@@ -162,10 +170,11 @@ void Receiver::readPacket(byte* data, uint32_t len, bool fromCombined)
 			printf("%0.2X ", data[i]);
 		printf("\n");
 		break;
+#endif
 	}
 }
 
-bool Receiver::validatePacket(byte*& packet, uint32_t& len, uint32_t& offset, bool fromCombined)
+bool ProtocolReceiver::validatePacket(byte*& packet, uint32_t& len, uint32_t& offset, bool fromCombined)
 {
 	// check CRC before decompressing
 	if (!fromCombined && !CRC::validatePacket(packet, len, getCRCKey()))

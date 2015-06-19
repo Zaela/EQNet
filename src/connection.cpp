@@ -2,7 +2,7 @@
 #include "stdafx.h"
 
 Connection::Connection(EQNet* net)
-	: Receiver(net)
+	: ProtocolReceiver(net)
 {
 	setTimeoutEnabled(true);
 }
@@ -126,7 +126,9 @@ void Connection::processPacketLogin(uint16_t opcode, byte* data, uint32_t len)
 	{
 	case OP_ChatMessage:
 	{
+#ifdef EQNET_DEBUG
 		printf("OP_ChatMessage\n");
+#endif
 		// we receive this to signal that the server's ready to
 		// receive login credentials, for whatever reason
 
@@ -142,7 +144,9 @@ void Connection::processPacketLogin(uint16_t opcode, byte* data, uint32_t len)
 
 	case OP_LoginAccepted:
 	{
+#ifdef EQNET_DEBUG
 		printf("OP_LoginAccepted\n");
+#endif
 
 		if (len < 80)
 		{
@@ -158,7 +162,9 @@ void Connection::processPacketLogin(uint16_t opcode, byte* data, uint32_t len)
 		setAccountID(rb->login_acct_id);
 		setSessionKey(rb->key);
 
+#ifdef EQNET_DEBUG
 		printf("AccountID: %u, SessionKey: %s\n", getAccountID(), getSessionKey().c_str());
+#endif
 
 		EQNet_Free(decrypted);
 
@@ -173,7 +179,9 @@ void Connection::processPacketLogin(uint16_t opcode, byte* data, uint32_t len)
 
 	case OP_ServerListResponse:
 	{
+#ifdef EQNET_DEBUG
 		printf("OP_ServerListResponse\n");
+#endif
 
 		uint32_t count = *(uint32_t*)(data + 16);
 		uint32_t offset = 20;
@@ -245,9 +253,11 @@ void Connection::processPacketLogin(uint16_t opcode, byte* data, uint32_t len)
 		break;
 	}
 
+#ifdef EQNET_DEBUG
 	default:
 		printf("unhandled login opcode: 0x%0.4X\n", opcode);
 		break;
+#endif
 	}
 }
 
@@ -257,7 +267,11 @@ void Connection::processPacketWorld(uint16_t opcode, byte* data, uint32_t len)
 	// motd and zoneserverinfo likely to be reused in zone
 
 	uint16_t eqnetOpcode = translateOpcodeFromServer(mEQNet, opcode);
+
+#ifdef EQNET_DEBUG
 	printf("opcode 0x%0.4X -> 0x%0.4X\n", opcode, eqnetOpcode);
+#endif
+
 	switch (eqnetOpcode)
 	{
 	// packets on the way to char select
@@ -328,12 +342,14 @@ void Connection::processPacketWorld(uint16_t opcode, byte* data, uint32_t len)
 		break;
 	}
 
+#ifdef EQNET_DEBUG
 	default:
 		printf("unhandled world opcode: 0x%0.4X\n", opcode);
 		for (uint32_t i = 0; i < len; ++i)
 			printf("%0.2X ", data[i]);
 		printf("\n");
 		break;
+#endif
 	}
 }
 
@@ -341,5 +357,6 @@ void Connection::processPacketZone(uint16_t opcode, byte* data, uint32_t len)
 {
 	uint16_t eqnetOpcode = translateOpcodeFromServer(mEQNet, opcode);
 
-	handleZonePacket(mEQNet, eqnetOpcode, opcode, data, len);
+	if (eqnetOpcode != EQNET_OP_NONE)
+		handleZonePacket(mEQNet, eqnetOpcode, opcode, data, len);
 };

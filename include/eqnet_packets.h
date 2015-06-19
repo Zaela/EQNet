@@ -57,6 +57,13 @@ typedef struct EQNetPacket_TimeUpdate {
 	uint32_t year;
 } EQNetPacket_TimeUpdate;
 
+typedef struct EQNetPacket_MoneyUpdate {
+	int platinum;
+	int gold;
+	int silver;
+	int copper;
+} EQNetPacket_MoneyUpdate;
+
 typedef struct EQNetPacket_Consider {
 	EQNet_Id mobId;
 	uint8_t factionCon;
@@ -148,7 +155,6 @@ enum EQNet_OpCodes
 	EQNET_OP_ReadBook,
 	EQNET_OP_Dye,
 	EQNET_OP_Consume,
-	EQNET_OP_Begging,
 	EQNET_OP_InspectRequest,
 	EQNET_OP_InspectAnswer,
 	EQNET_OP_BeginCast,
@@ -171,8 +177,6 @@ enum EQNet_OpCodes
 	EQNET_OP_CastSpell,
 	EQNET_OP_DeleteSpell,
 	EQNET_OP_LoadSpellSet,
-	EQNET_OP_AutoAttack,
-	EQNET_OP_AutoFire,
 	EQNET_OP_Consider,
 	EQNET_OP_Emote,
 	EQNET_OP_PetCommands,
@@ -182,11 +186,9 @@ enum EQNet_OpCodes
 	EQNET_OP_FormattedMessage,
 	EQNET_OP_WhoAllRequest,
 	EQNET_OP_WhoAllResponse,
-	EQNET_OP_AutoAttack2,
 	EQNET_OP_SetRunMode,
 	EQNET_OP_SimpleMessage,
 	EQNET_OP_SaveOnZoneReq,
-	EQNET_OP_SenseHeading,
 	EQNET_OP_Buff,
 	EQNET_OP_LootComplete,
 	EQNET_OP_EnvDamage,
@@ -199,7 +201,6 @@ enum EQNet_OpCodes
 	EQNET_OP_ItemLinkResponse,
 	EQNET_OP_ZoneChange,
 	EQNET_OP_ItemLinkClick,
-	EQNET_OP_Forage,
 	EQNET_OP_BazaarSearch,
 	EQNET_OP_Spawn,
 	EQNET_OP_WearChange,
@@ -209,9 +210,7 @@ enum EQNet_OpCodes
 	EQNET_OP_WeatherUpdate,
 	EQNET_OP_LFPGetMatchesRequest,
 	EQNET_OP_Illusion,
-	EQNET_OP_TargetCommand,
-	EQNET_OP_TargetMouse,
-	EQNET_OP_TargetHoTT,
+	EQNET_OP_TargetsTarget,
 	EQNET_OP_GMKill,
 	EQNET_OP_MoneyOnCorpse,
 	EQNET_OP_ClickDoor,
@@ -374,15 +373,8 @@ enum EQNet_OpCodes
 	EQNET_OP_Sound,
 	EQNET_OP_MobRename,
 	EQNET_OP_BankerChange,
-	EQNET_OP_Taunt,
-	EQNET_OP_CombatAbility,
-	EQNET_OP_SenseTraps,
 	EQNET_OP_PickPocket,
-	EQNET_OP_DisarmTraps,
 	EQNET_OP_Disarm,
-	EQNET_OP_Hide,
-	EQNET_OP_Sneak,
-	EQNET_OP_Fishing,
 	EQNET_OP_InstillDoubt,
 	EQNET_OP_LDoNOpen,
 	EQNET_OP_TaskActivityComplete,

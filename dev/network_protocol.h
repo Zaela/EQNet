@@ -38,6 +38,13 @@ struct SessionStat
 	uint64_t packets_received;
 };
 
+struct SessionDisconnect
+{
+	uint16_t opcode;
+	uint32_t sessionID;
+	uint16_t crc;
+};
+
 #pragma pack()
 
 #define OP_NONE					0x00

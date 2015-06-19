@@ -21,7 +21,7 @@ private:
 	byte* mBuffer;
 
 public:
-	Packet(EQNet* net, uint32_t data_len, uint16_t opcode, bool hasSequence = true, int protocol_opcode = OP_Packet);
+	Packet(EQNet* net, uint32_t data_len, uint16_t opcode, bool hasSequence = true, uint16_t protocol_opcode = OP_Packet);
 	Packet();
 	Packet(const Packet& toCopy);
 	~Packet();

@@ -25,6 +25,9 @@ static uint16_t findOpcodeToServer(uint16_t opcodeIn, const OpCodeTranslation* o
 
 uint16_t translateOpcodeFromServer(EQNet* net, uint16_t opcodeIn)
 {
+	if (opcodeIn <= 0x29)
+		return EQNET_OP_NONE;
+
 	switch (net->clientVersion)
 	{
 	case EQNET_CLIENT_Titanium:
