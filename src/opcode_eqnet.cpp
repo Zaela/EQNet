@@ -113,10 +113,14 @@ uint32_t isNoDeleteOpcode(uint16_t opcode)
 #undef OpBit
 #undef set
 
-void checkSpecialDestructor(EQNet_Packet& p)
+#define CAST(var, to) EQNetPacket_##to* var = (EQNetPacket_##to*)p.data
+
+void checkSpecialDestructor(EQNet_Packet& p, int count)
 {
 	switch (p.opcode)
 	{
 
-	}
+	} // switch
 }
+
+#undef CAST

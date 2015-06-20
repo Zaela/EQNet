@@ -16,6 +16,8 @@
 #define EQNET_DEFAULT_CLIENT_VERSION EQNET_CLIENT_Titanium
 #define EQNET_DEFAULT_RETRIES 5
 
+#define EQNET_WORLD_PORT 9000
+
 typedef uint8_t byte;
 
 enum EQNet_Mode
@@ -41,9 +43,10 @@ struct EQNet
 	EQNet_Event* eventQueue;
 
 	/* Booleans */
-	uint32_t translateZonePackets : 1;
+	uint32_t translatePackets : 1;
 	uint32_t awaitingSession : 1;
-	uint32_t unusedBits : 30;
+	uint32_t receivedPlayerSpawn : 1;
+	uint32_t unusedBits : 29;
 
 	/* Network IO */
 	Packet* ackPacket;
@@ -52,7 +55,7 @@ struct EQNet
 	uint32_t retryMaxAttempts;
 
 	/* Zone */
-	EQNet_Character* selectedCharacter;
+	const EQNet_Character* selectedCharacter;
 	Address addressZone;
 
 	/* Login */

@@ -2,7 +2,7 @@
 #ifndef _EQNET_ACKMGR_H_
 #define _EQNET_ACKMGR_H_
 
-#include <queue>
+#include <vector>
 #include <chrono>
 
 #include "main.h"
@@ -32,7 +32,8 @@ private:
 	ReadPacket* mFuturePackets[SEQUENCE_MAX];
 
 protected:
-	std::queue<ReadPacket*> mReadPacketQueue;
+	uint32_t mReadQueuePos;
+	std::vector<ReadPacket*> mReadPacketQueue;
 
 private:
 	enum PacketSequence
@@ -45,7 +46,7 @@ private:
 	static PacketSequence compareSequence(uint16_t got, uint16_t expected);
 
 private:
-	int copyFragment(ReadPacket* out, int outOffset, uint16_t i, int offset = 4);
+	int copyFragment(ReadPacket* out, int outOffset, uint16_t i, int offset = 0);
 	void checkFragmentComplete();
 	void checkAfterPacket();
 	void startFragSequence(byte* data, uint16_t seq);
@@ -55,7 +56,7 @@ private:
 protected:
 	void receiveAck(uint16_t seq);
 	void checkInboundPacket(byte* packet, uint32_t len, uint32_t off = 2);
-	void checkInboundFragment(byte* packet, uint32_t len);
+	void checkInboundFragment(byte* packet, uint32_t len, uint32_t off = 2);
 	void queueRawPacket(byte* data, uint32_t len);
 	void resetAcks();
 
@@ -65,6 +66,7 @@ public:
 	AckManager(EQNet* net);
 
 	void checkAutoAck();
+	void clearReadPacketQueue();
 
 	uint32_t getSessionID() { return mSessionID; }
 

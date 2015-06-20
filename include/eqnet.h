@@ -26,6 +26,7 @@
 
 #ifdef __cplusplus
  #define EQNET_DEFAULT(val) = val
+ #define NULL 0
 extern "C" {
 #else
  #define EQNET_DEFAULT(val)
@@ -73,25 +74,28 @@ EQNET_API const char* EQNet_GetErrorMessage(EQNet*);
 
 EQNET_API void                  EQNet_SetLoginServer(EQNet*, const char* ip, uint16_t port EQNET_DEFAULT(5998));
 EQNET_API EQNetBOOL             EQNet_LoginToServerSelect(EQNet*, const char* username, const char* password);
-EQNET_API EQNetBOOL             EQNet_LoginToWorld(EQNet*, EQNet_Server* server);
+EQNET_API EQNetBOOL             EQNet_LoginToWorld(EQNet*, const EQNet_Server* server);
 
 EQNET_API const EQNet_Server*   EQNet_GetServerList(EQNet*, int* count);
-EQNET_API EQNetBOOL             EQNet_ServerIsUp(EQNet*, EQNet_Server* server);
-EQNET_API EQNetBOOL             EQNet_ServerIsLocked(EQNet*, EQNet_Server* server);
+EQNET_API EQNetBOOL             EQNet_ServerIsUp(EQNet*, const EQNet_Server* server);
+EQNET_API EQNetBOOL             EQNet_ServerIsLocked(EQNet*, const EQNet_Server* server);
 
 /*
 ** World
 */
 
-EQNET_API EQNetBOOL     EQNet_WorldToZone(EQNet*, EQNet_Character* character);
+EQNET_API EQNetBOOL     EQNet_WorldToZone(EQNet*, const EQNet_Character* character);
 EQNET_API const char*   EQNet_GetServerShortName(EQNet*);
 
 EQNET_API const EQNet_Guild*        EQNet_GetGuildList(EQNet*, int* count);
 EQNET_API const EQNet_Character*    EQNet_GetCharacterList(EQNet*, int* count);
 
 /*
-** Zone
+** Chat
 */
+
+EQNET_API void EQNet_SendChatMessage(EQNet*, const char* message, EQNet_ChatChannel channel EQNET_DEFAULT(EQNET_CHAT_Say),
+	uint32_t language EQNET_DEFAULT(0), const char* tellRecipient EQNET_DEFAULT(NULL));
 
 /*
 ** Combat
@@ -105,10 +109,17 @@ EQNET_API void EQNet_Consider(EQNet*, EQNet_Id target);
 EQNET_API void EQNet_UseSkill(EQNet*, EQNet_Skill skill, EQNet_Id target EQNET_DEFAULT(0));
 
 /*
+** Inventory
+*/
+
+EQNET_API void EQNet_DropCursorItem(EQNet*);
+
+/*
 ** Raw I/O
 */
 
 EQNET_API void EQNet_KeepAlive(EQNet*);
+EQNET_API void EQNet_Flush(EQNet*);
 EQNET_API void EQNet_SendRawPacket(EQNet*, uint16_t opcode, const void* data, uint32_t len, EQNetBOOL isNativeOpcode EQNET_DEFAULT(0));
 EQNET_API void EQNet_SendRawBytes(EQNet*, const void* data, uint32_t len);
 

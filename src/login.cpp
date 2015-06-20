@@ -41,9 +41,9 @@ int EQNet_LoginToServerSelect(EQNet* net, const char* username, const char* pass
 	return true;
 }
 
-EQNet_Server* copyServer(EQNet_Server*);
+EQNet_Server* copyServer(const EQNet_Server*);
 
-int EQNet_LoginToWorld(EQNet* net, EQNet_Server* server)
+int EQNet_LoginToWorld(EQNet* net, const EQNet_Server* server)
 {
 	if (net->mode != MODE_SERVER_SELECT)
 		return false;
@@ -67,7 +67,7 @@ const EQNet_Server* EQNet_GetServerList(EQNet* net, int* count)
 	return net->serverList;
 }
 
-EQNet_Server* copyServer(EQNet_Server* src)
+EQNet_Server* copyServer(const EQNet_Server* src)
 {
 	EQNet_Server* copy = new EQNet_Server;
 	memset(copy, 0, sizeof(EQNet_Server));
@@ -111,13 +111,13 @@ void freeServerList(EQNet* net)
 	net->serverList = nullptr;
 }
 
-int EQNet_ServerIsUp(EQNet* net, EQNet_Server* server)
+int EQNet_ServerIsUp(EQNet* net, const EQNet_Server* server)
 {
 	(void)net;
 	return server->status == 0 || server->status == 2;
 }
 
-int EQNet_ServerIsLocked(EQNet* net, EQNet_Server* server)
+int EQNet_ServerIsLocked(EQNet* net, const EQNet_Server* server)
 {
 	(void)net;
 	return server->status >= 4;

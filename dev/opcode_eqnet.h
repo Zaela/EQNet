@@ -49,6 +49,9 @@ enum Unexposed_OpCodes
 	EQNET_OP_SenseTraps,
 	EQNET_OP_DisarmTraps,
 	EQNET_OP_Fishing,
+	/* Chat */
+	EQNET_OP_SimpleMessage,
+	EQNET_OP_SpecialMesg,
 	EQNET_OP_INTERNAL_MAX_COUNT
 };
 
@@ -57,6 +60,6 @@ uint16_t translateOpcodeToServer(EQNet*, uint16_t opcode);
 void initNoDeleteOpcodes();
 void setNoDeleteOpcode(uint16_t opcode);
 uint32_t isNoDeleteOpcode(uint16_t opcode);
-void checkSpecialDestructor(EQNet_Packet& packet);
+void checkSpecialDestructor(EQNet_Packet& packet, int count);
 
 #endif//_EQNET_OPCODE_EQNET_H_

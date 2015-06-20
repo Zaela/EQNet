@@ -56,10 +56,29 @@ struct ReadPacket
 			memcpy(data, in_data, in_len);
 	}
 
+	// this should be copy- or move-assignment/construction,
+	// but this way gave me less headaches...
+	/*
+	void take(ReadPacket& rp)
+	{
+		byte* d = rp.data;
+		rp.data = nullptr;
+
+		if (data)
+			delete[] data;
+
+		data = d;
+		len = rp.len;
+	}
+	*/
+
 	~ReadPacket()
 	{
 		if (data)
+		{
 			delete[] data;
+			data = nullptr;
+		}
 	}
 
 	byte* data;

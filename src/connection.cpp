@@ -80,10 +80,15 @@ bool Connection::retry()
 
 void Connection::processPackets()
 {
-	while (!mReadPacketQueue.empty())
+	//while (!mReadPacketQueue.empty())
+	//{
+		//ReadPacket* packet = mReadPacketQueue.front();
+		//ReadPacket packet;
+		//packet.take(mReadPacketQueue.front());
+		//mReadPacketQueue.pop();
+	for (; mReadQueuePos < mReadPacketQueue.size(); ++mReadQueuePos)
 	{
-		ReadPacket* packet = mReadPacketQueue.front();
-		mReadPacketQueue.pop();
+		ReadPacket* packet = mReadPacketQueue[mReadQueuePos];
 
 		uint16_t opcode = *(uint16_t*)packet->data;
 		uint32_t offset = 2;
@@ -104,7 +109,7 @@ void Connection::processPackets()
 		else
 			processPacketLogin(opcode, data, len);
 		
-		delete packet;
+		//delete packet; // move to start of next Poll cycle
 	}
 }
 
@@ -230,7 +235,7 @@ void Connection::processPacketLogin(uint16_t opcode, byte* data, uint32_t len)
 
 		Address addr;
 		addr.ip = mEQNet->selectedServer->ip;
-		addr.port = 9000;
+		addr.port = EQNET_WORLD_PORT;
 
 		recordAddress(mEQNet->addressWorld, addr);
 		

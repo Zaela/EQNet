@@ -14,7 +14,6 @@ int EQNet_Init()
 
 void EQNet_Close()
 {
-	deinitPacketHandlers();
 #ifdef _WIN32
 	Socket::closeLibrary();
 #endif
@@ -33,7 +32,7 @@ EQNet* EQNet_Create()
 	net->eventQueueCap = EQNET_EVENT_QUEUE_DEFAULT_LEN;
 
 	net->retryMaxAttempts = EQNET_DEFAULT_RETRIES;
-	net->translateZonePackets = true;
+	net->translatePackets = true;
 
 	net->ackPacket = new Packet(nullptr, 2, OP_NONE, false, OP_Ack);
 	net->ackPacket->setNoDelete();

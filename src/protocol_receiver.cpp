@@ -140,7 +140,7 @@ void ProtocolReceiver::readPacket(byte* data, uint32_t len, bool fromCombined)
 		if (!validatePacket(data, len, offset, fromCombined))
 			break;
 
-		checkInboundFragment(data, len);
+		checkInboundFragment(data, len, offset);
 		break;
 	}
 
@@ -153,6 +153,12 @@ void ProtocolReceiver::readPacket(byte* data, uint32_t len, bool fromCombined)
 		receiveAck(seq);
 		break;
 	}
+
+	case OP_OutOfOrder:
+#ifdef EQNET_DEBUG
+		printf("OP_OutOfOrder: %u\n", *(uint16_t*)(data + offset));
+#endif
+		break;
 
 	case OP_SessionDisconnect:
 		queueEvent(mEQNet, EQNET_EVENT_Disconnected);

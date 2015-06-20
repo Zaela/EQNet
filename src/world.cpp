@@ -1,9 +1,9 @@
 
 #include "stdafx.h"
 
-static void enterWorldPacket(EQNet* net, EQNet_Character* character, bool tutorial = false, bool home = false);
+static void enterWorldPacket(EQNet* net, const EQNet_Character* character, bool tutorial = false, bool home = false);
 
-int EQNet_WorldToZone(EQNet* net, EQNet_Character* character)
+int EQNet_WorldToZone(EQNet* net, const EQNet_Character* character)
 {
 	if (net->mode != MODE_CHAR_SELECT)
 		return false;
@@ -12,9 +12,10 @@ int EQNet_WorldToZone(EQNet* net, EQNet_Character* character)
 	return true;
 }
 
-void enterWorldPacket(EQNet* net, EQNet_Character* character, bool tutorial, bool home)
+void enterWorldPacket(EQNet* net, const EQNet_Character* character, bool tutorial, bool home)
 {
 	net->selectedCharacter = character;
+	net->receivedPlayerSpawn = false;
 
 	// struct seems the same for all client versions
 	Packet* packet = new Packet(net, sizeof(Titanium::EnterWorld_Struct), EQNET_OP_EnterWorld);

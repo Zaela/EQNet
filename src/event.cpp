@@ -19,6 +19,7 @@ int EQNet_Poll(EQNet* net, EQNet_Event* ev)
 {
 	if (net->eventQueueReadPos == 0)
 	{
+		net->connection->clearReadPacketQueue();
 		if (!pump(net))
 			return false;
 	}
@@ -42,7 +43,7 @@ int EQNet_Poll(EQNet* net, EQNet_Event* ev)
 		{
 			if (!isNoDeleteOpcode(ev.packet.opcode))
 			{
-				checkSpecialDestructor(ev.packet);
+				checkSpecialDestructor(ev.packet, ev.count);
 				delete[] ev.packet.data;
 			}
 		}

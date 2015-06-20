@@ -115,6 +115,21 @@ enum EQNet_Skill
 #define EQNET_SKILL_TailRake EQNET_SKILL_DragonPunch
 #define EQNET_SKILL_Slam EQNET_SKILL_Bash
 
+enum EQNet_ChatChannel
+{
+	EQNET_CHAT_Guild,
+	EQNET_CHAT_Group = 2,
+	EQNET_CHAT_Shout,
+	EQNET_CHAT_Auction,
+	EQNET_CHAT_OutOfCharacter,
+	EQNET_CHAT_Broadcast,
+	EQNET_CHAT_Tell,
+	EQNET_CHAT_Say,
+	EQNET_CHAT_GmSay = 11,
+	EQNET_CHAT_Raid = 15,
+	EQNET_CHAT_Emote = 22
+};
+
 enum EQNet_Slot
 {
 	EQNET_SLOT_Head,

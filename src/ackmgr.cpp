@@ -6,7 +6,8 @@ AckManager::AckManager(EQNet* net) :
 	mAutoAckEnabled(false),
 	mExpectedSeq(0),
 	mLastReceivedAck(65535),
-	mBuildingFrag(false)
+	mBuildingFrag(false),
+	mReadQueuePos(0)
 {
 	memset(mFuturePackets, 0, sizeof(ReadPacket*) * SEQUENCE_MAX);
 	memset(mSentPackets, 0, sizeof(Packet*) * SEQUENCE_MAX);
@@ -104,7 +105,7 @@ void AckManager::checkInboundPacket(byte* packet, uint32_t len, uint32_t off)
 	case SEQUENCE_PRESENT:
 	{
 		// this is our next expected packet, queue it
-		mReadPacketQueue.push(new ReadPacket(packet + 2 + off, len - 2 - off)); // may want to handle the +4 -4 at the end for all packets equally to avoid intermediate allocations
+		mReadPacketQueue.push_back(new ReadPacket(packet + 2 + off, len - 2 - off));
 		++mExpectedSeq;
 		// check if we have any packets ahead of this one ready to be processed
 		checkAfterPacket();
@@ -117,15 +118,15 @@ void AckManager::checkInboundPacket(byte* packet, uint32_t len, uint32_t off)
 		// future packet: remember it for later
 		if (mFuturePackets[seq])
 			delete mFuturePackets[seq];
-		mFuturePackets[seq] = new ReadPacket(packet, len);
+		mFuturePackets[seq] = new ReadPacket(packet + 2 + off, len - 2 - off);
 		break;
 	}
 	} // switch
 }
 
-void AckManager::checkInboundFragment(byte* packet, uint32_t len)
+void AckManager::checkInboundFragment(byte* packet, uint32_t len, uint32_t off)
 {
-	uint16_t seq = toHostShort(*(uint16_t*)(packet + 2));
+	uint16_t seq = toHostShort(*(uint16_t*)(packet + off));
 
 	switch (compareSequence(seq, mExpectedSeq))
 	{
@@ -133,14 +134,14 @@ void AckManager::checkInboundFragment(byte* packet, uint32_t len)
 	{
 		// this is the starting packet of a fragment sequence
 		startFragSequence(packet, seq);
-		mFuturePackets[seq] = new ReadPacket(packet, len);
+		mFuturePackets[seq] = new ReadPacket(packet + off + 2, len - off - 2);
 
 		checkFragmentComplete();
 	}
 	case SEQUENCE_FUTURE:
 	{
 		// future packet: remember it for later
-		mFuturePackets[seq] = new ReadPacket(packet, len);
+		mFuturePackets[seq] = new ReadPacket(packet + off + 2, len - off - 2);
 
 		if (mBuildingFrag)
 		{
@@ -173,14 +174,14 @@ void AckManager::checkFragmentComplete()
 	if (rp == nullptr)
 		return;
 
-	uint32_t len = rp->len - 8;
+	uint32_t len = rp->len - 4;//8;
 	uint16_t i = mFragStart + 1;
 	while (len < mFragExpectedLen)
 	{
 		rp = mFuturePackets[i];
 		if (rp == nullptr)
 			return;
-		len += rp->len - 4;
+		len += rp->len; //- 4;
 		++i;
 	}
 
@@ -188,7 +189,7 @@ void AckManager::checkFragmentComplete()
 	ReadPacket* out = new ReadPacket(nullptr, len);
 
 	// copy first piece
-	uint32_t pos = copyFragment(out, 0, mFragStart, 8);
+	uint32_t pos = copyFragment(out, 0, mFragStart, 4);//8);
 
 	// copy subsequence pieces
 	i = mFragStart + 1;
@@ -199,7 +200,7 @@ void AckManager::checkFragmentComplete()
 	}
 
 	// add to queue
-	mReadPacketQueue.push(out);
+	mReadPacketQueue.push_back(out);
 
 	// clean up
 	mExpectedSeq = i;
@@ -229,8 +230,7 @@ void AckManager::checkAfterPacket()
 		}
 		else
 		{
-			mReadPacketQueue.push(new ReadPacket(nextPacket->data + 4, nextPacket->len - 4));
-			delete nextPacket;
+			mReadPacketQueue.push_back(nextPacket);
 			mFuturePackets[i] = nullptr;
 			++mExpectedSeq;
 		}
@@ -292,19 +292,14 @@ void AckManager::sendOutOfOrderRequest()
 
 void AckManager::queueRawPacket(byte* packet, uint32_t len)
 {
-	ReadPacket* rp;
-
+	int offset = 0;
 	if (len > 2 && packet[1] == 0xA5) // "not compressed" flag in between the two bytes of the opcode
 	{
 		packet[1] = packet[0];
-		rp = new ReadPacket(packet + 1, len - 1);
-	}
-	else
-	{
-		rp = new ReadPacket(packet, len);
+		offset = 1;
 	}
 
-	mReadPacketQueue.push(rp);
+	mReadPacketQueue.push_back(new ReadPacket(packet + offset, len - offset));
 }
 
 bool AckManager::resendUnackedPackets()
@@ -338,4 +333,16 @@ void AckManager::startFragSequence(byte* data, uint16_t seq)
 	// so this may fail in obscure circumstances
 
 	mFragExpectedLen = toHostLong(*(uint32_t*)(data + 4));
+}
+
+void AckManager::clearReadPacketQueue()
+{
+	if (mReadPacketQueue.empty())
+		return;
+
+	for (ReadPacket* rp : mReadPacketQueue)
+		delete rp;
+
+	mReadPacketQueue.clear();
+	mReadQueuePos = 0;
 }

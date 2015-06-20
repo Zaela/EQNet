@@ -980,7 +980,7 @@ struct ChannelMessage_Struct
 	/*132*/	uint32_t	chan_num;			// Channel
 	/*136*/	uint32_t	cm_unknown4[2];		// ***Placeholder
 	/*144*/	uint32_t	skill_in_language;	// The players skill in this language? might be wrong
-	/*148*/	char	message[1];			// Variable length message
+	/*148*/	//char	message[1];			// Variable length message
 };
 
 /*
@@ -1002,9 +1002,9 @@ struct SpecialMesg_Struct
 	/*00*/	char	header[3];				// 04 04 00 <-- for #emote style msg
 	/*03*/	uint32_t	msg_type;				// Color of text (see MT_*** below)
 	/*07*/	uint32_t	target_spawn_id;		// Who is it being said to?
-	/*11*/	char	sayer[1];				// Who is the source of the info
-	/*12*/	uint8_t	unknown12[12];
-	/*24*/	char	message[1];				// What is being said?
+	/*11*/	//char	sayer[1];				// Who is the source of the info
+	/*12*/	//uint8_t	unknown12[12];
+	/*24*/	//char	message[1];				// What is being said?
 };
 
 /*

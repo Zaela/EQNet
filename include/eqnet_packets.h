@@ -10,6 +10,8 @@
 
 typedef uint16_t EQNet_Id;
 
+#pragma pack(1)
+
 typedef struct EQNetPacket_PlayerProfile {
 
 } EQNetPacket_PlayerProfile;
@@ -70,6 +72,28 @@ typedef struct EQNetPacket_Consider {
 	uint8_t levelCon;
 	uint8_t pvpCon;
 } EQNetPacket_Consider;
+
+typedef struct EQNetPacket_ChatMessage {
+	char senderName[64];
+	EQNet_Id targetId;
+	uint16_t channel; // make enum
+	uint16_t color; // make enum
+	uint32_t language;
+	uint32_t len;
+	char msg[1];
+} EQNetPacket_ChatMessage;
+
+typedef struct EQNetPacket_ChatMessageEQStr {
+	uint16_t channel;
+	uint16_t color;
+	uint32_t strId;
+	struct {
+		uint32_t len;
+		const char* str;
+	} strings[9]; // max number of format strings
+} EQNetPacket_ChatMessageEQStr;
+
+#pragma pack()
 
 /*
 ** Opcodes
@@ -183,11 +207,10 @@ enum EQNet_OpCodes
 	EQNET_OP_PetBuffWindow,
 	EQNET_OP_SpawnAppearance,
 	EQNET_OP_Despawn,
-	EQNET_OP_FormattedMessage,
+	EQNET_OP_ChatMessageEQStr,
 	EQNET_OP_WhoAllRequest,
 	EQNET_OP_WhoAllResponse,
 	EQNET_OP_SetRunMode,
-	EQNET_OP_SimpleMessage,
 	EQNET_OP_SaveOnZoneReq,
 	EQNET_OP_Buff,
 	EQNET_OP_LootComplete,
@@ -205,7 +228,6 @@ enum EQNet_OpCodes
 	EQNET_OP_Spawn,
 	EQNET_OP_WearChange,
 	EQNET_OP_Action,
-	EQNET_OP_SpecialMesg,
 	EQNET_OP_LeaveBoat,
 	EQNET_OP_WeatherUpdate,
 	EQNET_OP_LFPGetMatchesRequest,
@@ -244,7 +266,7 @@ enum EQNet_OpCodes
 	EQNET_OP_TGB,
 	EQNET_OP_InterruptCast,
 	EQNET_OP_Damage,
-	EQNET_OP_ChannelMessage,
+	EQNET_OP_ChatMessage,
 	EQNET_OP_LevelAppearance,
 	EQNET_OP_Charm,
 	EQNET_OP_Assist,

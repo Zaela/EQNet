@@ -6,6 +6,11 @@ void EQNet_KeepAlive(EQNet* net)
 	net->connection->sendKeepAliveAckNoQueue();
 }
 
+void EQNet_Flush(EQNet* net)
+{
+	net->connection->processSendQueue();
+}
+
 void EQNet_SendRawPacket(EQNet* net, uint16_t opcode, const void* data, uint32_t len, int isNativeOpcode)
 {
 	if (!isNativeOpcode)
