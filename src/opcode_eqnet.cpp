@@ -42,10 +42,10 @@ uint16_t translateOpcodeFromServer(EQNet* net, uint16_t opcodeIn)
 	case EQNET_CLIENT_Underfoot:
 		return findOpcodeFromServer(opcodeIn, Underfoot::toCanonical,
 			sizeof(Underfoot::toCanonical) / sizeof(OpCodeTranslation));
-	case EQNET_CLIENT_ReignOfFear:
+	case EQNET_CLIENT_RainOfFear:
 		return findOpcodeFromServer(opcodeIn, RoF::toCanonical,
 			sizeof(RoF::toCanonical) / sizeof(OpCodeTranslation));
-	case EQNET_CLIENT_ReignOfFear2:
+	case EQNET_CLIENT_RainOfFear2:
 		return findOpcodeFromServer(opcodeIn, RoF2::toCanonical,
 			sizeof(RoF2::toCanonical) / sizeof(OpCodeTranslation));
 	}
@@ -69,10 +69,10 @@ uint16_t translateOpcodeToServer(EQNet* net, uint16_t opcodeIn)
 	case EQNET_CLIENT_Underfoot:
 		return findOpcodeToServer(opcodeIn, Underfoot::toCanonical,
 			sizeof(Underfoot::toCanonical) / sizeof(OpCodeTranslation));
-	case EQNET_CLIENT_ReignOfFear:
+	case EQNET_CLIENT_RainOfFear:
 		return findOpcodeToServer(opcodeIn, RoF::toCanonical,
 			sizeof(RoF::toCanonical) / sizeof(OpCodeTranslation));
-	case EQNET_CLIENT_ReignOfFear2:
+	case EQNET_CLIENT_RainOfFear2:
 		return findOpcodeToServer(opcodeIn, RoF2::toCanonical,
 			sizeof(RoF2::toCanonical) / sizeof(OpCodeTranslation));
 	}

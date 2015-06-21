@@ -47,8 +47,8 @@ enum EQNet_ClientVersion
 	EQNET_CLIENT_SecretsOfFaydwer,
 	EQNET_CLIENT_SeedsOfDestruction,
 	EQNET_CLIENT_Underfoot,
-	EQNET_CLIENT_ReignOfFear,
-	EQNET_CLIENT_ReignOfFear2
+	EQNET_CLIENT_RainOfFear,
+	EQNET_CLIENT_RainOfFear2
 };
 
 enum EQNet_Skill

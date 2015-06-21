@@ -82,6 +82,9 @@ HANDLER(ReuseFourByteToTwo)
 #define READ_STRING_BOUND(var, bound) Util::strcpy(var, (char*)(data + pos), bound); pos += bound
 #define READ_STRING_VARLEN(var, bound) readVarLenString(var, pos, data, bound)
 
+#define DECODE_CAST(t) *(t*)d.cast(sizeof(t));
+#define DECODE_CAST_VAR(var, t) t var = DECODE_CAST(t)
+
 char* readCopyString(uint32_t& pos, byte* data)
 {
 	char* src = (char*)(data + pos);
@@ -248,7 +251,7 @@ HANDLER(PlayerProfile)
 		break;
 	}
 
-	case EQNET_CLIENT_ReignOfFear2:
+	case EQNET_CLIENT_RainOfFear2:
 	{
 		READ_ADVANCE_COUNT(uint32_t, 4);
 		pp->gender = READ(uint8_t);
@@ -620,8 +623,8 @@ HANDLER(ChatMessage) // originally ChannelMessage
 		break;
 	}
 	case EQNET_CLIENT_Underfoot:
-	case EQNET_CLIENT_ReignOfFear:
-	case EQNET_CLIENT_ReignOfFear2:
+	case EQNET_CLIENT_RainOfFear:
+	case EQNET_CLIENT_RainOfFear2:
 	{
 		READ_SETUP;
 		char* sender = (char*)data;
@@ -741,20 +744,21 @@ HANDLER(Spawn)
 
 	switch (net->clientVersion)
 	{
-	case EQNET_CLIENT_ReignOfFear2:
+	case EQNET_CLIENT_RainOfFear2:
 	{
-		READ_STRING_VARLEN(sp->name, 64);
-		sp->mobId = READ(uint32_t);
-		sp->level = READ(uint8_t);
-		READ_ADVANCE(float);
-		uint8_t npc = READ(uint8_t);
+		Decoder d(data);
+		d.strVarLen(sp->name, 64);
+		sp->mobId = d.u32();
+		sp->level = d.u8();
+		d.skip(4);
+		uint8_t npc = d.u8();
 
 		if (npc == 1 || npc == 3)
 			sp->isNpc = true;
 		if (npc == 2 || npc == 3)
 			sp->isCorpse = true;
 
-		RoF::Spawn_Struct_Bitfields bit = READ(RoF::Spawn_Struct_Bitfields);
+		DECODE_CAST_VAR(bit, RoF::Spawn_Struct_Bitfields);
 		sp->gender = bit.gender;
 		sp->isPet = bit.ispet;
 		sp->isAfk = bit.afk;
@@ -773,85 +777,85 @@ HANDLER(Spawn)
 		sp->isTargetableWithHotkey = bit.targetable_with_hotkey;
 		sp->showName = bit.showname;
 
-		uint8_t titles = READ(uint8_t);
+		uint8_t titles = d.u8();
 
-		READ_ADVANCE_BYTES(9);
+		d.skip(9);
 
-		sp->bodyType = READ(uint32_t);
-		sp->hpPercent = READ(uint8_t);
-		sp->hairColor = READ(uint8_t);
-		sp->beardColor = READ(uint8_t);
-		sp->eyeColor1 = READ(uint8_t);
-		sp->eyeColor2 = READ(uint8_t);
-		sp->hairstyle = READ(uint8_t);
-		sp->beard = READ(uint8_t);
-		
-		sp->drakkinHeritage = READ(uint32_t);
-		sp->drakkinTattoo = READ(uint32_t);
-		sp->drakkinDetails = READ(uint32_t);
+		sp->bodyType = d.u32();
+		sp->hpPercent = d.u8();
+		sp->hairColor = d.u8();
+		sp->beardColor = d.u8();
+		sp->eyeColor1 = d.u8();
+		sp->eyeColor2 = d.u8();
+		sp->hairstyle = d.u8();
+		sp->beard = d.u8();
 
-		READ_ADVANCE_BYTES(3);
-		sp->helm = READ(uint8_t);
-		sp->size = READ(float);
-		sp->face = READ(uint8_t);
-		sp->walkspeed = READ(float);
-		sp->runspeed = READ(float);
-		sp->race = READ(uint32_t);
+		sp->drakkinHeritage = d.u32();
+		sp->drakkinTattoo = d.u32();
+		sp->drakkinDetails = d.u32();
 
-		READ_ADVANCE_BYTES(1);
-		sp->deity = READ(uint32_t);
+		d.skip(3);
+		sp->helm = d.u8();
+		sp->size = d.f32();
+		sp->face = d.u8();
+		sp->walkspeed = d.f32();
+		sp->runspeed = d.f32();
+		sp->race = d.u32();
+
+		d.skip(1);
+		sp->deity = d.u32();
 
 		if (npc)
 		{
-			READ_ADVANCE_COUNT(uint32_t, 2);
+			d.skip(8);
 		}
 		else
 		{
-			sp->guildId = READ(uint32_t);
-			sp->guildRank = READ(uint32_t);
+			sp->guildId = d.u32();
+			sp->guildRank = d.u32();
 		}
 
-		sp->charClass = READ(uint8_t);
-		READ_ADVANCE_BYTES(1);
-		sp->standState = READ(uint8_t);
-		sp->light = READ(uint8_t);
-		sp->flyMode = READ(uint8_t);
+		sp->charClass = d.u8();
+		d.skip(1);
+		sp->standState = d.u8();
+		sp->light = d.u8();
+		sp->flyMode = d.u8();
 
-		READ_STRING_VARLEN(sp->surname, 32);
+		d.strVarLen(sp->surname, 32);
 
-		READ_ADVANCE_BYTES(6);
-		sp->ownerId = READ(uint32_t);
+		d.skip(6);
+		sp->ownerId = d.u32();
 
-		READ_ADVANCE_BYTES(1 + 4 * 6);
+		d.skip(1 + 4 * 6);
 
 		if (npc == 0 || (sp->race <= 12) || (sp->race == 128) || (sp->race == 130) || (sp->race == 330) || (sp->race == 522))
 		{
 			for (int i = 0; i < EQNET_EQUIP_TINT_COUNT; ++i)
 			{
-				sp->equipMaterialTints[i] = READ(uint32_t);
+				sp->equipMaterialTints[i] = d.u32();
 			}
 
-			READ_ADVANCE_COUNT(uint32_t, 2);
+			d.skip(8);
 
 			for (int i = 0; i < EQNET_EQUIP_MATERIAL_COUNT; ++i)
 			{
-				sp->equipMaterials[i].material = READ(uint32_t);
-				READ_ADVANCE(uint32_t);
-				sp->equipMaterials[i].eliteMaterial = READ(uint32_t);
-				sp->equipMaterials[i].heroForgeModel = READ(uint32_t);
-				sp->equipMaterials[i].material2 = READ(uint32_t);
+				sp->equipMaterials[i].material = d.u32();
+				d.skip(4);
+				sp->equipMaterials[i].eliteMaterial = d.u32();
+				sp->equipMaterials[i].heroForgeModel = d.u32();
+				sp->equipMaterials[i].material2 = d.u32();
 			}
 		}
 		else
 		{
-			READ_ADVANCE_COUNT(uint32_t, 5);
-			sp->equipMaterials[EQNET_MATERIAL_Primary].material = READ(uint32_t);
-			READ_ADVANCE_COUNT(uint32_t, 4);
-			sp->equipMaterials[EQNET_MATERIAL_Secondary].material = READ(uint32_t);
-			READ_ADVANCE_COUNT(uint32_t, 4);
+			d.skip(20);
+			sp->equipMaterials[EQNET_MATERIAL_Primary].material = d.u32();
+			d.skip(16);
+			sp->equipMaterials[EQNET_MATERIAL_Secondary].material = d.u32();
+			d.skip(16);
 		}
 
-		RoF2::Spawn_Struct_Position p = READ(RoF2::Spawn_Struct_Position);
+		DECODE_CAST_VAR(p, RoF2::Spawn_Struct_Position);
 
 		// need to do some translation here
 		sp->x = Util::EQ19toFloat(p.x);
@@ -865,13 +869,12 @@ HANDLER(Spawn)
 		sp->animation = p.animation;
 
 		if (titles & 16)
-			READ_STRING_VARLEN(sp->title, 32);
+			d.strVarLen(sp->title, 32);
 		if (titles & 32)
-			READ_STRING_VARLEN(sp->suffix, 32);
+			d.strVarLen(sp->suffix, 32);
 
-		READ_ADVANCE_BYTES(8);
-		sp->isMercenary = VIEW(uint8_t) ? true : false;
-
+		d.skip(8);
+		sp->isMercenary = d.u8() ? true : false;
 		break;
 	}
 	} // switch

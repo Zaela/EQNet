@@ -136,8 +136,8 @@ void readGuilds(EQNet* net, byte* data, uint32_t len)
 		break;
 	}
 	case EQNET_CLIENT_Underfoot:
-	case EQNET_CLIENT_ReignOfFear:
-	case EQNET_CLIENT_ReignOfFear2:
+	case EQNET_CLIENT_RainOfFear:
+	case EQNET_CLIENT_RainOfFear2:
 	{
 		Underfoot::GuildsList_Struct* guilds = (Underfoot::GuildsList_Struct*)data;
 		
@@ -246,8 +246,8 @@ void readCharSelectCharacters(EQNet* net, byte* data, uint32_t len)
 		break;
 	}
 
-	case EQNET_CLIENT_ReignOfFear:
-	case EQNET_CLIENT_ReignOfFear2:
+	case EQNET_CLIENT_RainOfFear:
+	case EQNET_CLIENT_RainOfFear2:
 	{
 		RoF::CharacterSelect_Struct* cs = (RoF::CharacterSelect_Struct*)data;
 

@@ -27,8 +27,8 @@ void EQNet_SendChatMessage(EQNet* net, const char* message, EQNet_ChatChannel ch
 		break;
 	}
 	case EQNET_CLIENT_Underfoot:
-	case EQNET_CLIENT_ReignOfFear:
-	case EQNET_CLIENT_ReignOfFear2:
+	case EQNET_CLIENT_RainOfFear:
+	case EQNET_CLIENT_RainOfFear2:
 	{
 		uint32_t len = 36 + msglen + 2; // 2 null terminators for sender name and tell recipient
 		uint32_t tellLen = 0;

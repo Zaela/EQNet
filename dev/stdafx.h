@@ -20,6 +20,7 @@
 #include "socket.h"
 #include "util.h"
 #include "random.h"
+#include "decoder.h"
 
 #include "structs_login.h"
 #include "structs_titanium.h"
