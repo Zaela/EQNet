@@ -13,7 +13,7 @@ private:
 	std::string mSessionKey;
 
 private:
-	bool validatePacket(byte*& packet, uint32_t& len, uint32_t& offset, bool fromCombined = false);
+	bool validatePacket(byte*& packet, uint32_t& len, uint32_t& offset, bool fromCombined = false, bool checkCrc = true);
 	void readPacket(byte* data, uint32_t len, bool fromCombined = false);
 
 protected:

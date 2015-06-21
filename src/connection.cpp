@@ -80,12 +80,6 @@ bool Connection::retry()
 
 void Connection::processPackets()
 {
-	//while (!mReadPacketQueue.empty())
-	//{
-		//ReadPacket* packet = mReadPacketQueue.front();
-		//ReadPacket packet;
-		//packet.take(mReadPacketQueue.front());
-		//mReadPacketQueue.pop();
 	for (; mReadQueuePos < mReadPacketQueue.size(); ++mReadQueuePos)
 	{
 		ReadPacket* packet = mReadPacketQueue[mReadQueuePos];
@@ -108,8 +102,6 @@ void Connection::processPackets()
 			processPacketWorldZone(opcode, data, len);
 		else
 			processPacketLogin(opcode, data, len);
-		
-		//delete packet; // move to start of next Poll cycle
 	}
 }
 

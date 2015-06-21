@@ -164,8 +164,8 @@ void Socket::queuePacket(Packet* packet)
 void Socket::sendPacketFragmented(Packet* p)
 {
 	// fragment packets:
-	// first chunk - proto op, seq, 32-bit length, 502 bytes of data, 2 byte crc
-	// subsequent - proto op, seq, 506 bytes of data, 2 byte crc
+	// first chunk - proto op, seq, 32-bit length, 504 bytes of data
+	// subsequent - proto op, seq, 508 bytes of data
 
 	byte* data = p->getDataBuffer();
 	uint32_t len = p->length();
@@ -190,11 +190,11 @@ void Socket::sendPacketFragmented(Packet* p)
 
 	uint32_t pos = 0;
 	// copy first 502 bytes
-	memcpy(buf + 8, data + minus, 502);
-	pos += 502;
+	memcpy(buf + 8, data + minus, 504);
+	pos += 504;
 
 	// send
-	sendPacket(buf, SEND_PACKET_MAX_SIZE_BEFORE_CRC);
+	sendPacket(buf, SEND_PACKET_MAX_SIZE, false);
 
 	// subsequent chunks
 	byte* bufWrite = buf + 4;
@@ -204,17 +204,17 @@ void Socket::sendPacketFragmented(Packet* p)
 		ptr[1] = toNetworkShort(getNextSequence());
 
 		uint32_t chunkLen = len - pos;
-		if (chunkLen > 506)
-			chunkLen = 506;
+		if (chunkLen > 508)
+			chunkLen = 508;
 
 		memcpy(bufWrite, data + pos, chunkLen);
 
-		sendPacket(buf, chunkLen + 4);
+		sendPacket(buf, chunkLen + 4, false);
 		pos += chunkLen;
 	}
 }
 
-void Socket::sendPacket(byte* data, uint32_t len)
+void Socket::sendPacket(byte* data, uint32_t len, bool addCRC)
 {
 	byte buf[SEND_PACKET_MAX_SIZE];
 
@@ -260,11 +260,16 @@ void Socket::sendPacket(byte* data, uint32_t len)
 
 	// write crc
 	// all packets are allocated with 2 extra bytes at the end to hold the CRC
-	uint16_t* crc = (uint16_t*)(data + len);
-	*crc = CRC::calcOutbound(data, len, getCRCKey());
+	uint32_t crcLen = 0;
+	if (addCRC)
+	{
+		crcLen = 2;
+		uint16_t* crc = (uint16_t*)(data + len);
+		*crc = CRC::calcOutbound(data, len, getCRCKey());
+	}
 
 	// send
-	sendRaw(data, len + 2);
+	sendRaw(data, len + crcLen);
 }
 
 void Socket::sendPacket(Packet* p)

@@ -164,7 +164,92 @@ HANDLER(PlayerProfile)
 
 	switch (net->clientVersion)
 	{
+	case EQNET_CLIENT_Titanium:
+	{
+		CAST(p, PlayerProfile_Struct);
+		pp->gender = p->gender;
+		pp->race = p->race;
+		pp->charClass = p->class_;
+		pp->level = p->level;
+		for (int i = 0; i < EQNET_BIND_POINT_COUNT; ++i)
+		{
+			EQNetPacket_BindPoint& bp = pp->bindPoints[i];
+			BindStruct& b = p->binds[i];
+			bp.zoneId = b.zoneId;
+			bp.x = b.x;
+			bp.y = b.y;
+			bp.z = b.z;
+			bp.heading = b.heading;
+		}
+		pp->deity = p->deity;
+		pp->intoxication = p->intoxication;
+		pp->hairColor = p->haircolor;
+		pp->beardColor = p->beardcolor;
+		pp->eyeColor1 = p->eyecolor1;
+		pp->eyeColor2 = p->eyecolor2;
+		pp->hairstyle = p->hairstyle;
+		pp->beard = p->beard;
+		for (int i = 0; i < EQNET_EQUIP_MATERIAL_COUNT; ++i)
+			pp->equipMaterials[i] = p->item_material[i];
+		for (int i = 0; i < EQNET_EQUIP_TINT_COUNT; ++i)
+			pp->equipMaterialTints[i].color = p->item_tint[i].color;
+		for (int i = 0; i < EQNET_AA_COUNT; ++i)
+		{
+			EQNetPacket_AA& aa = pp->AAs[i];
+			AA_Array& a = p->aa_array[i];
+			aa.id = a.AA;
+			aa.value = a.value;
+		}
+		pp->trainingPoints = p->points;
+		pp->currentMana = p->mana;
+		pp->currentHp = p->cur_hp;
+		pp->STR = p->STR;
+		pp->STA = p->STA;
+		pp->CHA = p->CHA;
+		pp->DEX = p->DEX;
+		pp->INT = p->INT;
+		pp->AGI = p->AGI;
+		pp->WIS = p->WIS;
+		pp->face = p->face;
+		for (int i = 0; i < 400; ++i)
+			pp->spellbook[i] = p->spell_book[i];
+		for (int i = 0; i < EQNET_MEMSPELL_COUNT; ++i)
+			pp->memmedSpells[i] = p->mem_spells[i];
+		pp->platinum = p->platinum;
+		pp->gold = p->gold;
+		pp->silver = p->silver;
+		pp->copper = p->copper;
+		pp->cursorPlatinum = p->platinum_cursor;
+		pp->cursorGold = p->gold_cursor;
+		pp->cursorSilver = p->silver_cursor;
+		pp->cursorCopper = p->copper_cursor;
+		for (int i = 0; i < EQNET_SKILL_COUNT; ++i)
+			pp->skills[i] = p->skills[i];
+		pp->thirst = p->thirst_level;
+		pp->hunger = p->hunger_level;
+		for (int i = 0; i < EQNET_BUFF_COUNT; ++i)
+		{
+			EQNetPacket_Buff& bf = pp->buffs[i];
+			SpellBuff_Struct& b = p->buffs[i];
+			bf.casterId = b.player_id;
+			bf.casterLevel = b.level;
+			bf.slot = b.slotid;
+			bf.duration = b.duration;
+			bf.spellId = b.spellid;
+			bf.instrumentModifier = b.bard_modifier;
+			bf.counters = b.counters;
+		}
+		for (int i = 0; i < EQNET_DISCIPLINE_COUNT; ++i)
+			pp->disciplines[i] = p->disciplines.values[i];
+		for (int i = 0; i < 20; ++i)
+			pp->recastTimes[i] = p->recastTimers[i];
+		pp->currentEndurance = p->endurance;
+
+		break;
+	}
+
 	case EQNET_CLIENT_ReignOfFear2:
+	{
 		READ_ADVANCE_COUNT(uint32_t, 4);
 		pp->gender = READ(uint8_t);
 		pp->race = READ(uint32_t);
@@ -424,12 +509,12 @@ HANDLER(PlayerProfile)
 		pp->ldonPointsRuj = READ(uint32_t);
 		pp->ldonPointsTak = READ(uint32_t);
 		pp->ldonPointsAvailable = READ(uint32_t);
-		
+
 		pp->groupLeadershipExp = READ(double);
 		pp->raidLeadershipExp = READ(double);
 
 		READ_ADVANCE(uint32_t);
-		
+
 		for (int i = 0; i < EQNET_TOTAL_LEADERSHIP_COUNT; ++i)
 		{
 			pp->leadershipAAs[i] = READ(uint32_t);
@@ -440,6 +525,7 @@ HANDLER(PlayerProfile)
 		// mostly pvp stuff remaining... finish later
 		break;
 	}
+	} // switch
 
 	QUEUE_STRUCT(pp, PlayerProfile);
 }
@@ -697,7 +783,7 @@ HANDLER(Spawn)
 
 		READ_STRING_VARLEN(sp->surname, 32);
 
-		READ_ADVANCE_BYTES(3);
+		READ_ADVANCE_BYTES(6);
 		sp->ownerId = READ(uint32_t);
 
 		READ_ADVANCE_BYTES(1 + 4 * 6);
@@ -732,14 +818,14 @@ HANDLER(Spawn)
 		RoF2::Spawn_Struct_Position p = READ(RoF2::Spawn_Struct_Position);
 
 		// need to do some translation here
-		sp->x = (float)p.x;
-		sp->y = (float)p.y;
-		sp->z = (float)p.z;
-		sp->heading = (float)p.heading;
-		sp->deltaX = (float)p.deltaX;
-		sp->deltaY = (float)p.deltaY;
-		sp->deltaZ = (float)p.deltaZ;
-		sp->deltaHeading = (float)p.deltaHeading;
+		sp->x = Util::EQ19toFloat(p.x);
+		sp->y = Util::EQ19toFloat(p.y);
+		sp->z = Util::EQ19toFloat(p.z);
+		sp->heading = Util::unpackHeading(p.heading);
+		sp->deltaX = Util::EQ13toFloat(p.deltaX); // check if these should be "precise" instead
+		sp->deltaY = Util::EQ13toFloat(p.deltaY);
+		sp->deltaZ = Util::EQ13toFloat(p.deltaZ);
+		sp->deltaHeading = Util::EQ13toFloat(p.deltaHeading);
 		sp->animation = p.animation;
 
 		if (titles & 16)

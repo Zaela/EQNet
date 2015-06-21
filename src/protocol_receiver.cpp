@@ -137,7 +137,7 @@ void ProtocolReceiver::readPacket(byte* data, uint32_t len, bool fromCombined)
 
 	case OP_Fragment:
 	{
-		if (!validatePacket(data, len, offset, fromCombined))
+		if (!validatePacket(data, len, offset, fromCombined, false))
 			break;
 
 		checkInboundFragment(data, len, offset);
@@ -180,10 +180,10 @@ void ProtocolReceiver::readPacket(byte* data, uint32_t len, bool fromCombined)
 	}
 }
 
-bool ProtocolReceiver::validatePacket(byte*& packet, uint32_t& len, uint32_t& offset, bool fromCombined)
+bool ProtocolReceiver::validatePacket(byte*& packet, uint32_t& len, uint32_t& offset, bool fromCombined, bool checkCrc)
 {
 	// check CRC before decompressing
-	if (!fromCombined && !CRC::validatePacket(packet, len, getCRCKey()))
+	if (checkCrc && !fromCombined && !CRC::validatePacket(packet, len, getCRCKey()))
 		return false;
 
 	// attempt to decompress

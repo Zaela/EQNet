@@ -174,14 +174,14 @@ void AckManager::checkFragmentComplete()
 	if (rp == nullptr)
 		return;
 
-	uint32_t len = rp->len - 4;//8;
+	uint32_t len = rp->len - 4;
 	uint16_t i = mFragStart + 1;
 	while (len < mFragExpectedLen)
 	{
 		rp = mFuturePackets[i];
 		if (rp == nullptr)
 			return;
-		len += rp->len; //- 4;
+		len += rp->len;
 		++i;
 	}
 
@@ -189,7 +189,7 @@ void AckManager::checkFragmentComplete()
 	ReadPacket* out = new ReadPacket(nullptr, len);
 
 	// copy first piece
-	uint32_t pos = copyFragment(out, 0, mFragStart, 4);//8);
+	uint32_t pos = copyFragment(out, 0, mFragStart, 4);
 
 	// copy subsequence pieces
 	i = mFragStart + 1;
