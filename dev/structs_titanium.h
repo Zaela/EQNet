@@ -1,6 +1,6 @@
 
-#ifndef _EQNET_STRUCTS_TITANIUM_H
-#define _EQNET_STRUCTS_TITANIUM_H
+#ifndef _EQNET_STRUCTS_TITANIUM_H_
+#define _EQNET_STRUCTS_TITANIUM_H_
 
 #include <cstdint>
 

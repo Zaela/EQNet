@@ -16,4 +16,17 @@ namespace Util
 		}
 		dst[boundLen] = 0;
 	}
+
+	char* copyString(const char* src, uint32_t len)
+	{
+		char* dst = new char[len];
+		memcpy(dst, src, len);
+		return dst;
+	}
+
+	char* copyString(const char* src)
+	{
+		size_t len = strlen(src) + 1;
+		return copyString(src, len);
+	}
 }

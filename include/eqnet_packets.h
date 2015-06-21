@@ -1,6 +1,6 @@
 
-#ifndef _EQNET_EVENT_PacketS_H_
-#define _EQNET_EVENT_PacketS_H_
+#ifndef _EQNET_PACKETS_H_
+#define _EQNET_PACKETS_H_
 
 #include <stdint.h>
 
@@ -12,25 +12,181 @@ typedef uint16_t EQNet_Id;
 
 #pragma pack(1)
 
-typedef struct EQNetPacket_PlayerProfile {
+typedef struct EQNetPacket_Buff {
+	uint32_t spellId;
+	uint32_t slot;
+	EQNet_Id casterId;
+	uint8_t casterLevel;
+	uint32_t duration;
+	float instrumentModifier;
+	uint32_t counters;
+} EQNetPacket_Buff;
 
+typedef struct EQNetPacket_BindPoint {
+	uint32_t zoneId;
+	float x, y, z, heading;
+} EQNetPacket_BindPoint;
+
+typedef struct EQNetPacket_AA {
+	uint32_t id;
+	uint32_t value;
+	uint32_t charges;
+} EQNetPacket_AA;
+
+typedef struct EQNetPacket_BandolierItem {
+	const char* name;
+	uint32_t id;
+	int32_t icon;
+} EQNetPacket_BandolierItem;
+
+typedef struct EQNetPacket_Bandolier {
+	const char* name;
+	EQNetPacket_BandolierItem items[EQNET_BANDOLIER_ITEMS_COUNT];
+} EQNetPacket_Bandolier;
+
+typedef struct EQNetPacket_PlayerProfile {
+	char name[64];
+	char surname[32];
+	uint8_t charClass;
+	uint32_t race;
+	uint8_t gender;
+	uint8_t level;
+	uint32_t currentHp;
+	uint32_t currentMana;
+	uint32_t currentEndurance;
+	uint32_t STR, DEX, AGI, STA, WIS, INT, CHA;
+	uint16_t zoneId;
+	uint16_t instanceId;
+	float x, y, z, heading;
+	EQNetPacket_BindPoint bindPoints[EQNET_BIND_POINT_COUNT];
+	uint8_t isGM, isPvP;
+	uint32_t guildId;
+	uint8_t guildRank;
+	uint64_t experience;
+	uint32_t experienceAA;
+	uint32_t deity;
+	uint32_t intoxication;
+	uint32_t equipMaterials[EQNET_EQUIP_MATERIAL_COUNT];
+	struct {
+		uint32_t color;
+		uint32_t color2;
+	} equipMaterialTints[EQNET_EQUIP_TINT_COUNT];
+	uint32_t skills[EQNET_SKILL_COUNT];
+	uint32_t disciplines[EQNET_DISCIPLINE_COUNT];
+	uint32_t recastTimes[20];
+	uint32_t spellbook[EQNET_SPELLBOOK_COUNT];
+	uint32_t memmedSpells[EQNET_MEMSPELL_COUNT];
+	EQNetPacket_Buff buffs[EQNET_BUFF_COUNT];
+	uint8_t hairColor;
+	uint8_t beardColor;
+	uint8_t eyeColor1;
+	uint8_t eyeColor2;
+	uint8_t hairstyle;
+	uint8_t beard;
+	uint8_t face;
+	uint32_t drakkinHeritage;
+	uint32_t drakkinTattoo;
+	uint32_t drakkinDetails;
+	uint32_t trainingPoints; // unspent class guild master training points
+	uint32_t platinum, gold, silver, copper;
+	uint32_t cursorPlatinum, cursorGold, cursorSilver, cursorCopper;
+	uint32_t bankPlatinum, bankGold, bankSilver, bankCopper;
+	uint32_t sharedPlatinum;
+	uint32_t hunger, thirst;
+	uint32_t spentAApoints;
+	uint32_t availableAApoints;
+	EQNetPacket_AA AAs[EQNET_AA_COUNT];
+	uint32_t radiantCrystals, totalRadiantCrystals;
+	uint32_t ebonCrystals, totalEbonCrystals;
+	uint32_t ldonPointsGuk, ldonPointsMir, ldonPointsMmc, ldonPointsRuj, ldonPointsTak;
+	uint32_t ldonPointsAvailable;
+	uint8_t leadershipActive;
+	double groupLeadershipExp, raidLeadershipExp;
+	uint32_t groupLeadershipPoints, raidLeadershipPoints;
+	uint32_t leadershipAAs[EQNET_TOTAL_LEADERSHIP_COUNT];
+	EQNetPacket_Bandolier bandolier[EQNET_BANDOLIERS_COUNT];
+	EQNetPacket_BandolierItem potionBelt[EQNET_POTION_BELT_ITEM_COUNT];
+	uint32_t creationTime;
+	uint32_t lastLoginTime;
+	uint32_t minutesPlayed;
+	uint32_t entitledTime;
+	uint8_t languages[EQNET_LANGUAGE_COUNT];
+	uint8_t showHelm;
+	uint32_t restTimer;
+	uint32_t tributePoints, totalTributePoints;
+	struct {
+		uint32_t id;
+		uint32_t tier;
+	} tributes[EQNET_TRIBUTE_COUNT];
+	// pvp
 } EQNetPacket_PlayerProfile;
 
 typedef struct EQNetPacket_Spawn {
 	EQNet_Id mobId;
-	uint16_t isNpc : 1;
-	uint16_t isCorpse : 1;
-	uint16_t isPet : 1;
-	uint16_t isInvis : 1;
-	uint16_t isGM : 1;
-	uint16_t isFlyMode : 1;
-	uint16_t isAnonymous : 1;
-	uint16_t isRoleplay : 1;
-	uint16_t isAfk : 1;
-	uint16_t isFindable : 1;
-	uint16_t isShowHelm : 1;
-	uint16_t isGuildOfficer : 1;
-	uint16_t isGuildLeader : 1;
+	EQNet_Id ownerId;
+	uint32_t gender : 2;
+	uint32_t isNpc : 1;
+	uint32_t isCorpse : 1;
+	uint32_t isPet : 1;
+	uint32_t isInvis : 1;
+	uint32_t isGM : 1;
+	uint32_t isAnonymous : 1;
+	uint32_t isRoleplay : 1;
+	uint32_t isAfk : 1;
+	uint32_t isLfg : 1;
+	uint32_t isLinkdead : 1;
+	uint32_t isFindable : 1;
+	uint32_t isShowHelm : 1;
+	uint32_t isGuildOfficer : 1;
+	uint32_t isGuildLeader : 1;
+	uint32_t isSneaking : 1;
+	uint32_t showHelm : 1;
+	uint32_t isTrader : 1;
+	uint32_t isTargetable : 1;
+	uint32_t isTargetableWithHotkey : 1;
+	uint32_t showName : 1;
+	uint32_t hasTitle : 1;
+	uint32_t hasSuffix : 1;
+	uint32_t isMercenary : 1;
+	uint8_t level;
+	uint8_t charClass;
+	uint32_t race;
+	uint32_t deity;
+	uint8_t hpPercent;
+	char name[64];
+	char surname[32];
+	char title[32];
+	char suffix[32];
+	float size;
+	float walkspeed;
+	float runspeed;
+	float x, y, z, heading;
+	float deltaX, deltaY, deltaZ, deltaHeading;
+	int32_t animation;
+	uint8_t helm;
+	uint8_t standState;
+	uint8_t light;
+	uint8_t flyMode;
+	struct {
+		uint32_t material;
+		uint32_t eliteMaterial;
+		uint32_t heroForgeModel;
+		uint32_t material2;
+	} equipMaterials[EQNET_EQUIP_MATERIAL_COUNT];
+	uint32_t equipMaterialTints[EQNET_EQUIP_TINT_COUNT];
+	uint32_t guildId;
+	uint8_t guildRank;
+	uint8_t hairColor;
+	uint8_t beardColor;
+	uint8_t eyeColor1;
+	uint8_t eyeColor2;
+	uint8_t hairstyle;
+	uint8_t beard;
+	uint8_t face;
+	uint32_t drakkinHeritage;
+	uint32_t drakkinTattoo;
+	uint32_t drakkinDetails;
+	uint32_t bodyType;
 } EQNetPacket_Spawn;
 
 typedef struct EQNetPacket_ZoneData {
@@ -579,4 +735,4 @@ enum EQNet_OpCodes
 	EQNET_OP_MAX_COUNT
 };
 
-#endif/*_EQNET_EVENT_PacketS_H_*/
+#endif/*_EQNET_PACKETS_H_*/

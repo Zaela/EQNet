@@ -110,6 +110,7 @@
     <ClInclude Include="dev\stdafx.h" />
     <ClInclude Include="dev\structs_login.h" />
     <ClInclude Include="dev\structs_rof.h" />
+    <ClInclude Include="dev\structs_rof2.h" />
     <ClInclude Include="dev\structs_titanium.h" />
     <ClInclude Include="dev\structs_underfoot.h" />
     <ClInclude Include="dev\util.h" />

@@ -114,6 +114,9 @@
     <ClInclude Include="dev\packet_handlers.h">
       <Filter>Header Files</Filter>
     </ClInclude>
+    <ClInclude Include="dev\structs_rof2.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="src\init.cpp">

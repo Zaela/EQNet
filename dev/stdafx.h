@@ -25,6 +25,7 @@
 #include "structs_titanium.h"
 #include "structs_underfoot.h"
 #include "structs_rof.h"
+#include "structs_rof2.h"
 
 #include "opcode_eqnet.h"
 #include "opcode_login.h"

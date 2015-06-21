@@ -50,9 +50,9 @@ typedef int EQNetBOOL;
 ** Initialization and deinitialization
 */
 
-EQNET_API EQNetBOOL EQNet_Init();
-EQNET_API void      EQNet_Close();
-EQNET_API EQNet*    EQNet_Create();
+EQNET_API EQNetBOOL EQNet_Init(void);
+EQNET_API void      EQNet_Close(void);
+EQNET_API EQNet*    EQNet_Create(void);
 EQNET_API void      EQNet_Destroy(EQNet*);
 
 EQNET_API void                EQNet_SetClientVersion(EQNet*, EQNet_ClientVersion version);

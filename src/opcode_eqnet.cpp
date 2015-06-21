@@ -119,7 +119,21 @@ void checkSpecialDestructor(EQNet_Packet& p, int count)
 {
 	switch (p.opcode)
 	{
-
+	case EQNET_OP_PlayerProfile:
+	{
+		EQNetPacket_PlayerProfile* pp = (EQNetPacket_PlayerProfile*)p.data;
+		for (int i = 0; i < EQNET_BANDOLIERS_COUNT; ++i)
+		{
+			if (pp->bandolier[i].name)
+				delete[] pp->bandolier[i].name;
+			for (int j = 0; j < EQNET_BANDOLIER_ITEMS_COUNT; ++j)
+			{
+				if (pp->bandolier[i].items[j].name)
+					delete[] pp->bandolier[i].items[j].name;
+			}
+		}
+		break;
+	}
 	} // switch
 }
 
