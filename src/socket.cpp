@@ -189,7 +189,7 @@ void Socket::sendPacketFragmented(Packet* p)
 	*lenPtr = toNetworkLong(len - minus); 
 
 	uint32_t pos = 0;
-	// copy first 502 bytes
+	// copy first 504 bytes
 	memcpy(buf + 8, data + minus, 504);
 	pos += 504;
 

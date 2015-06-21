@@ -597,20 +597,56 @@ HANDLER(PlayerSpawn)
 HANDLER(ChatMessage) // originally ChannelMessage
 {
 	PREAMBLE;
-	CAST(src, ChannelMessage_Struct);
-	const char* msg = (char*)(data + sizeof(ChannelMessage_Struct));
-	size_t msglen = strlen(msg);
 
-	uint32_t outlen = PACKET_SIZE(ChatMessage) + msglen; // chatmessage has an extra byte for the msg stub
-	ALLOC_VARSIZE_STRUCT(cm, ChatMessage, outlen);
-	Util::strcpy(cm->senderName, src->sender, 64);
-	cm->targetId = 0;
-	cm->channel = src->chan_num;
-	cm->color = 0;
-	cm->language = src->language;
-	cm->len = msglen;
-	memcpy(cm->msg, msg, msglen + 1);
-	QUEUE_VARSIZE(cm, outlen);
+	switch (net->clientVersion)
+	{
+	case EQNET_CLIENT_Titanium:
+	case EQNET_CLIENT_SecretsOfFaydwer:
+	case EQNET_CLIENT_SeedsOfDestruction:
+	{
+		CAST(src, ChannelMessage_Struct);
+		const char* msg = (char*)(data + sizeof(ChannelMessage_Struct));
+		size_t msglen = strlen(msg);
+
+		uint32_t outlen = PACKET_SIZE(ChatMessage) + msglen; // chatmessage has an extra byte for the msg stub
+		ALLOC_VARSIZE_STRUCT(cm, ChatMessage, outlen);
+		ZERO_STRUCT(cm, ChatMessage);
+		Util::strcpy(cm->senderName, src->sender, 64);
+		cm->channel = src->chan_num;
+		cm->language = src->language;
+		cm->len = msglen;
+		memcpy(cm->msg, msg, msglen + 1);
+		QUEUE_VARSIZE(cm, outlen);
+		break;
+	}
+	case EQNET_CLIENT_Underfoot:
+	case EQNET_CLIENT_ReignOfFear:
+	case EQNET_CLIENT_ReignOfFear2:
+	{
+		READ_SETUP;
+		char* sender = (char*)data;
+		uint32_t senderLen = strlen(sender) + 1;
+		READ_ADVANCE_BYTES(senderLen);
+		char* tell = (char*)(data + pos);
+		uint32_t tellLen = strlen(tell) + 1;
+		READ_ADVANCE_BYTES(tellLen + 4);
+		uint32_t lang = READ(uint32_t);
+		uint32_t channel = READ(uint32_t);
+		READ_ADVANCE_BYTES(9);
+		char* msg = (char*)(data + pos);
+		uint32_t msglen = strlen(msg);
+
+		uint32_t outlen = PACKET_SIZE(ChatMessage) + msglen;
+		ALLOC_VARSIZE_STRUCT(cm, ChatMessage, outlen);
+		ZERO_STRUCT(cm, ChatMessage);
+		Util::strcpy(cm->senderName, sender, 64);
+		cm->channel = channel;
+		cm->language = lang;
+		memcpy(cm->msg, msg, msglen + 1);
+		QUEUE_VARSIZE(cm, outlen);
+		break;
+	}
+	} // switch
 }
 
 HANDLER(ChatMessageEQStr) // originally FormattedMessage
