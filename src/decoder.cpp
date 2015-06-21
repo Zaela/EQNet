@@ -72,3 +72,108 @@ void* Decoder::cast(uint32_t len)
 	skip(len);
 	return ret;
 }
+
+Encoder::Encoder() :
+	mData(nullptr),
+	mPos(0),
+	mCap(0)
+{
+
+}
+
+Encoder::Encoder(uint32_t len) :
+	mPos(0),
+	mCap(len)
+{
+	alloc();
+}
+
+Encoder::~Encoder()
+{
+	if (mData)
+		delete[] mData;
+}
+
+void Encoder::alloc()
+{
+	if (mData) this->~Encoder();
+	mData = new byte[mCap];
+	memset(mData, 0, mCap);
+}
+
+void Encoder::addLen(uint32_t n)
+{
+	if (!mData)
+		mCap += n;
+}
+
+void Encoder::copy(byte* to)
+{
+	memcpy(to, mData, mCap);
+}
+
+void Encoder::u8(uint8_t v)
+{
+	*(uint8_t*)(mData + mPos) = v;
+	mPos++;
+}
+
+void Encoder::u16(uint16_t v)
+{
+	*(uint16_t*)(mData + mPos) = v;
+	mPos += sizeof(uint16_t);
+}
+
+void Encoder::u32(uint32_t v)
+{
+	*(uint32_t*)(mData + mPos) = v;
+	mPos += sizeof(uint32_t);
+}
+
+void Encoder::u64(uint64_t v)
+{
+	*(uint64_t*)(mData + mPos) = v;
+	mPos += sizeof(uint64_t);
+}
+
+void Encoder::f32(float v)
+{
+	*(float*)(mData + mPos) = v;
+	mPos += sizeof(float);
+}
+
+void Encoder::f64(double v)
+{
+	*(double*)(mData + mPos) = v;
+	mPos += sizeof(double);
+}
+
+void Encoder::strFixed(const char* str, uint32_t bound)
+{
+	Util::strcpy((char*)(mData + mPos), str, bound);
+	mPos += bound;
+}
+
+void Encoder::strVarLen(const char* str)
+{
+	uint32_t len = strlen(str) + 1;
+	memcpy(mData + mPos, str, len);
+	mPos += len;
+}
+
+void Encoder::skip(uint32_t n)
+{
+	mPos += n;
+}
+
+void* Encoder::ptr()
+{
+	return mData + mPos;
+}
+
+void* Encoder::cast(uint32_t size)
+{
+	void* ret = mData + mPos;
+	mPos += size;
+	return ret;
+}

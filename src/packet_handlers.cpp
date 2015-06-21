@@ -608,8 +608,11 @@ HANDLER(ChatMessage) // originally ChannelMessage
 	case EQNET_CLIENT_SeedsOfDestruction:
 	{
 		CAST(src, ChannelMessage_Struct);
-		const char* msg = (char*)(data + sizeof(ChannelMessage_Struct));
+		char* msg = (char*)(data + sizeof(ChannelMessage_Struct));
 		size_t msglen = strlen(msg);
+
+		// ensure null terminator
+		msg[msglen] = 0;
 
 		uint32_t outlen = PACKET_SIZE(ChatMessage) + msglen; // chatmessage has an extra byte for the msg stub
 		ALLOC_VARSIZE_STRUCT(cm, ChatMessage, outlen);
@@ -638,6 +641,9 @@ HANDLER(ChatMessage) // originally ChannelMessage
 		READ_ADVANCE_BYTES(9);
 		char* msg = (char*)(data + pos);
 		uint32_t msglen = strlen(msg);
+
+		// ensure null terminator
+		msg[msglen] = 0;
 
 		uint32_t outlen = PACKET_SIZE(ChatMessage) + msglen;
 		ALLOC_VARSIZE_STRUCT(cm, ChatMessage, outlen);

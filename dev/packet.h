@@ -6,6 +6,7 @@
 #include <cstring>
 #include "main.h"
 #include "network_protocol.h"
+#include "decoder.h"
 
 typedef uint8_t byte;
 
@@ -55,22 +56,6 @@ struct ReadPacket
 		if (in_data)
 			memcpy(data, in_data, in_len);
 	}
-
-	// this should be copy- or move-assignment/construction,
-	// but this way gave me less headaches...
-	/*
-	void take(ReadPacket& rp)
-	{
-		byte* d = rp.data;
-		rp.data = nullptr;
-
-		if (data)
-			delete[] data;
-
-		data = d;
-		len = rp.len;
-	}
-	*/
 
 	~ReadPacket()
 	{

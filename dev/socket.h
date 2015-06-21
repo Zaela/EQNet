@@ -85,7 +85,7 @@ private:
 	uint16_t getNextSequence() { return ++mNextSeq; }
 
 protected:
-	void sendPacket(byte* data, uint32_t len, bool addCRC = true);
+	void sendPacket(byte* data, uint32_t len);
 	void resetSequence() { mNextSeq = 65535; }
 
 public:

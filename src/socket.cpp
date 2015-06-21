@@ -167,8 +167,8 @@ void Socket::sendPacketFragmented(Packet* p)
 	// first chunk - proto op, seq, 32-bit length, 504 bytes of data
 	// subsequent - proto op, seq, 508 bytes of data
 
-	byte* data = p->getDataBuffer();
-	uint32_t len = p->length();
+	byte* data = p->getRawBuffer();
+	uint32_t len = p->lengthWithOverhead();
 
 	byte buf[SEND_PACKET_MAX_SIZE];
 	
@@ -185,16 +185,15 @@ void Socket::sendPacketFragmented(Packet* p)
 	else
 		minus = 2; // protocol opcode
 
-	uint32_t* lenPtr = (uint32_t*)(data + 4);
+	uint32_t* lenPtr = (uint32_t*)(buf + 4);
 	*lenPtr = toNetworkLong(len - minus); 
 
-	uint32_t pos = 0;
 	// copy first 504 bytes
-	memcpy(buf + 8, data + minus, 504);
-	pos += 504;
+	memcpy(buf + 8, data + minus, 502);
+	uint32_t pos = minus + 502;
 
 	// send
-	sendPacket(buf, SEND_PACKET_MAX_SIZE, false);
+	sendPacket(buf, SEND_PACKET_MAX_SIZE_BEFORE_CRC);
 
 	// subsequent chunks
 	byte* bufWrite = buf + 4;
@@ -204,17 +203,17 @@ void Socket::sendPacketFragmented(Packet* p)
 		ptr[1] = toNetworkShort(getNextSequence());
 
 		uint32_t chunkLen = len - pos;
-		if (chunkLen > 508)
-			chunkLen = 508;
+		if (chunkLen > 506)
+			chunkLen = 506;
 
 		memcpy(bufWrite, data + pos, chunkLen);
 
-		sendPacket(buf, chunkLen + 4, false);
+		sendPacket(buf, chunkLen + 4);
 		pos += chunkLen;
 	}
 }
 
-void Socket::sendPacket(byte* data, uint32_t len, bool addCRC)
+void Socket::sendPacket(byte* data, uint32_t len)
 {
 	byte buf[SEND_PACKET_MAX_SIZE];
 
@@ -260,16 +259,11 @@ void Socket::sendPacket(byte* data, uint32_t len, bool addCRC)
 
 	// write crc
 	// all packets are allocated with 2 extra bytes at the end to hold the CRC
-	uint32_t crcLen = 0;
-	if (addCRC)
-	{
-		crcLen = 2;
-		uint16_t* crc = (uint16_t*)(data + len);
-		*crc = CRC::calcOutbound(data, len, getCRCKey());
-	}
+	uint16_t* crc = (uint16_t*)(data + len);
+	*crc = CRC::calcOutbound(data, len, getCRCKey());
 
 	// send
-	sendRaw(data, len + crcLen);
+	sendRaw(data, len + 2);
 }
 
 void Socket::sendPacket(Packet* p)
@@ -295,13 +289,19 @@ void Socket::processSinglePacketQueue()
 {
 	Packet* p = mSendQueue[0];
 
-	if (p->hasSequence())
+	if (p->lengthWithOverhead() > SEND_PACKET_MAX_SIZE_BEFORE_CRC)
 	{
-		p->setSequence(getNextSequence());
-		recordSentPacket(*p);
+		sendPacketFragmented(p);
 	}
-
-	sendPacket(p);
+	else
+	{
+		if (p->hasSequence())
+		{
+			p->setSequence(getNextSequence());
+			recordSentPacket(*p);
+		}
+		sendPacket(p);
+	}
 
 	if (!p->isNoDelete())
 		delete p;
