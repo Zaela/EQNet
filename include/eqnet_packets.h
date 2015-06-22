@@ -229,13 +229,13 @@ typedef struct EQNetPacket_Consider {
 } EQNetPacket_Consider;
 
 typedef struct EQNetPacket_ChatMessage {
-	char senderName[64];
+	const char* senderName;
 	EQNet_Id targetId;
 	uint16_t channel; // make enum
 	uint16_t color; // make enum
 	uint32_t language;
 	uint32_t len;
-	char msg[1];
+	const char* msg;
 } EQNetPacket_ChatMessage;
 
 typedef struct EQNetPacket_ChatMessageEQStr {
