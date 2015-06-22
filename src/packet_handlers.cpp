@@ -67,6 +67,7 @@ HANDLER(ReuseFourByteToTwo)
 #define QUEUE_STRUCT_OP_WITH_COUNT(var, sname, op, c) queuePacketEvent(net, op, var, PACKET_SIZE(sname), opcode, data, len, c)
 #define QUEUE_DEFAULT queuePacketEvent(net, eqnetOpcode, opcode, data, len)
 #define ZERO_STRUCT(var, sname) memset(var, 0, PACKET_SIZE(sname))
+#define ZERO_STRUCT_ARRAY(var, sname, c) memset(var, 0, PACKET_SIZE(sname) * c)
 
 #define HANDLE_AS(name) ph##name(net, EQNET_OP_##name, opcode, data, len)
 #define HANDLE_AS_BUT_KEEP_OPCODE(name) ph##name(net, eqnetOpcode, opcode, data, len)
@@ -599,6 +600,8 @@ HANDLER(PlayerSpawn)
 /////////////////////////////////////////////
 HANDLER(ChatMessage) // originally ChannelMessage
 {
+	// ensure null terminator
+	data[len - 1] = 0;
 	PREAMBLE;
 
 	switch (net->clientVersion)
@@ -610,9 +613,6 @@ HANDLER(ChatMessage) // originally ChannelMessage
 		CAST(src, ChannelMessage_Struct);
 		char* msg = (char*)(data + sizeof(ChannelMessage_Struct));
 		size_t msglen = strlen(msg);
-
-		// ensure null terminator
-		msg[msglen] = 0;
 
 		uint32_t outlen = PACKET_SIZE(ChatMessage) + msglen; // chatmessage has an extra byte for the msg stub
 		ALLOC_VARSIZE_STRUCT(cm, ChatMessage, outlen);
@@ -641,9 +641,6 @@ HANDLER(ChatMessage) // originally ChannelMessage
 		READ_ADVANCE_BYTES(9);
 		char* msg = (char*)(data + pos);
 		uint32_t msglen = strlen(msg);
-
-		// ensure null terminator
-		msg[msglen] = 0;
 
 		uint32_t outlen = PACKET_SIZE(ChatMessage) + msglen;
 		ALLOC_VARSIZE_STRUCT(cm, ChatMessage, outlen);
@@ -707,7 +704,7 @@ HANDLER(Consider)
 	QUEUE_STRUCT(con, Consider);
 }
 
-HANDLER(HpUpdateExact)
+HANDLER(HpUpdateExact) // originally HPUpdate
 {
 	PREAMBLE;
 	CAST(src, ExactHPUpdate_Struct);
@@ -718,7 +715,7 @@ HANDLER(HpUpdateExact)
 	QUEUE_STRUCT(hp, HpUpdateExact);
 }
 
-HANDLER(HpUpdatePercent)
+HANDLER(HpUpdatePercent) // originally MobUpdate
 {
 	PREAMBLE;
 	CAST(src, HPUpdate_Struct);
@@ -739,17 +736,192 @@ HANDLER(SimpleMessage)
 	QUEUE_STRUCT_OP_WITH_COUNT(cm, ChatMessageEQStr, EQNET_OP_ChatMessageEQStr, 0);
 }
 
+void translateSpawnCount(EQNet* net, byte* data, uint16_t nativeOpcode, uint32_t nativeLen)
+{
+	switch (net->clientVersion)
+	{
+	case EQNET_CLIENT_Titanium:
+	{
+		CAST(src, Spawn_Struct);
+		int count = nativeLen / sizeof(Spawn_Struct);
+		ALLOC_STRUCT_ARRAY(spawn, Spawn, count);
+		ZERO_STRUCT_ARRAY(spawn, Spawn, count);
+		auto* sp = spawn;
+
+		for (int c = 0; c < count; ++c)
+		{
+			sp->isGM = src->gm;
+			if (src->anon == 1)
+				sp->isAnonymous = true;
+			else if (src->anon == 2)
+				sp->isRoleplay = true;
+			sp->face = src->face;
+			Util::strcpy(sp->name, src->name, 64);
+			sp->deity = src->deity;
+			sp->size = src->size;
+			if (src->NPC == 1 || src->NPC == 3)
+				sp->isNpc = true;
+			if (src->NPC == 2 || src->NPC == 3)
+				sp->isCorpse = true;
+			sp->isInvis = src->invis;
+			sp->hairColor = src->haircolor;
+			sp->hpPercent = src->curHp;
+			sp->isFindable = src->findable;
+
+			sp->x = Util::EQ19toFloat(src->x);
+			sp->y = Util::EQ19toFloat(src->y);
+			sp->z = Util::EQ19toFloat(src->z);
+			sp->heading = Util::unpackHeading(src->heading);
+			sp->deltaX = Util::EQ13toFloat(src->deltaX);
+			sp->deltaY = Util::EQ13toFloat(src->deltaY);
+			sp->deltaZ = Util::EQ13toFloat(src->deltaZ);
+			sp->deltaHeading = Util::EQ13toFloat(src->deltaHeading);
+
+			sp->eyeColor1 = src->eyecolor1;
+			sp->eyeColor2 = src->eyecolor2;
+			sp->showHelm = src->showhelm;
+			sp->hairstyle = src->hairstyle;
+			sp->beardColor = src->beardcolor;
+			sp->level = src->level;
+			sp->beard = src->beard;
+
+			Util::strcpy(sp->suffix, src->suffix, 32);
+
+			sp->ownerId = src->petOwnerId;
+
+			sp->guildId = src->guildID;
+			sp->guildRank = src->guildrank; // should change to be in line with later clients having more ranks
+
+			for (int i = 0; i < EQNET_EQUIP_MATERIAL_COUNT; ++i)
+				sp->equipMaterials[i].material = src->equipment[i];
+
+			sp->runspeed = src->runspeed;
+			sp->walkspeed = src->walkspeed;
+			sp->isAfk = src->afk;
+
+			Util::strcpy(sp->title, src->title, 32);
+
+			sp->helm = src->helm;
+			sp->race = src->race;
+
+			Util::strcpy(sp->surname, src->lastName, 32);
+
+			sp->isPet = src->is_pet;
+			sp->light = src->light;
+			sp->charClass = src->class_;
+			sp->flyMode = src->flymode;
+			sp->gender = src->gender;
+			sp->bodyType = src->bodytype;
+			sp->mobId = src->spawnId;
+
+			for (int i = 0; i < EQNET_EQUIP_TINT_COUNT; ++i)
+				sp->equipMaterialTints[i] = src->colors[i].color;
+
+			sp->isLfg = src->lfg;
+
+			// advance to next
+			++sp;
+			++src;
+		}
+
+		queuePacketEvent(net, EQNET_OP_Spawn, (byte*)spawn, sizeof(EQNetPacket_Spawn) * count,
+			nativeOpcode, data, nativeLen, count);
+		break;
+	}
+	} // switch
+}
+
 HANDLER(Spawn)
 {
 	PREAMBLE;
 
+	if (net->clientVersion <= EQNET_CLIENT_SeedsOfDestruction)
+	{
+		translateSpawnCount(net, data, opcode, len);
+		return;
+	}
+
 	ALLOC_STRUCT(sp, Spawn);
 	ZERO_STRUCT(sp, Spawn);
 
-	READ_SETUP;
-
 	switch (net->clientVersion)
 	{
+	/*
+	case EQNET_CLIENT_Titanium:
+	{
+		CAST(src, Spawn_Struct);
+		sp->isGM = src->gm;
+		if (src->anon == 1)
+			sp->isAnonymous = true;
+		else if (src->anon == 2)
+			sp->isRoleplay = true;
+		sp->face = src->face;
+		Util::strcpy(sp->name, src->name, 64);
+		sp->deity = src->deity;
+		sp->size = src->size;
+		if (src->NPC == 1 || src->NPC == 3)
+			sp->isNpc = true;
+		if (src->NPC == 2 || src->NPC == 3)
+			sp->isCorpse = true;
+		sp->isInvis = src->invis;
+		sp->hairColor = src->haircolor;
+		sp->hpPercent = src->curHp;
+		sp->isFindable = src->findable;
+
+		sp->x = Util::EQ19toFloat(src->x);
+		sp->y = Util::EQ19toFloat(src->y);
+		sp->z = Util::EQ19toFloat(src->z);
+		sp->heading = Util::unpackHeading(src->heading);
+		sp->deltaX = Util::EQ13toFloat(src->deltaX);
+		sp->deltaY = Util::EQ13toFloat(src->deltaY);
+		sp->deltaZ = Util::EQ13toFloat(src->deltaZ);
+		sp->deltaHeading = Util::EQ13toFloat(src->deltaHeading);
+
+		sp->eyeColor1 = src->eyecolor1;
+		sp->eyeColor2 = src->eyecolor2;
+		sp->showHelm = src->showhelm;
+		sp->hairstyle = src->hairstyle;
+		sp->beardColor = src->beardcolor;
+		sp->level = src->level;
+		sp->beard = src->beard;
+
+		Util::strcpy(sp->suffix, src->suffix, 32);
+
+		sp->ownerId = src->petOwnerId;
+
+		sp->guildId = src->guildID;
+		sp->guildRank = src->guildrank; // should change to be in line with later clients having more ranks
+
+		for (int i = 0; i < EQNET_EQUIP_MATERIAL_COUNT; ++i)
+			sp->equipMaterials[i].material = src->equipment[i];
+
+		sp->runspeed = src->runspeed;
+		sp->walkspeed = src->walkspeed;
+		sp->isAfk = src->afk;
+
+		Util::strcpy(sp->title, src->title, 32);
+
+		sp->helm = src->helm;
+		sp->race = src->race;
+
+		Util::strcpy(sp->surname, src->lastName, 32);
+
+		sp->isPet = src->is_pet;
+		sp->light = src->light;
+		sp->charClass = src->class_;
+		sp->flyMode = src->flymode;
+		sp->gender = src->gender;
+		sp->bodyType = src->bodytype;
+		sp->mobId = src->spawnId;
+
+		for (int i = 0; i < EQNET_EQUIP_TINT_COUNT; ++i)
+			sp->equipMaterialTints[i] = src->colors[i].color;
+
+		sp->isLfg = src->lfg;
+		break;
+	}
+	*/
+
 	case EQNET_CLIENT_RainOfFear2:
 	{
 		Decoder d(data);
@@ -908,6 +1080,17 @@ HANDLER(SpecialMesg)
 	QUEUE_VARSIZE_OP(cm, outlen, EQNET_OP_ChatMessage);
 }
 
+HANDLER(ZoneSpawns)
+{
+	PREAMBLE;
+
+	if (net->clientVersion <= EQNET_CLIENT_SeedsOfDestruction)
+	{
+		translateSpawnCount(net, data, opcode, len);
+		return;
+	}
+}
+
 // handler must have same name as EQNET_OP_
 #define SET(handler) gPacketHandlers[EQNET_OP_##handler] = ph##handler
 #define REUSE(name) gPacketHandlers[EQNET_OP_##name] = phReuseNative; setNoDeleteOpcode(EQNET_OP_##name)
@@ -939,6 +1122,7 @@ void initPacketHandlers()
 	SET(SimpleMessage);
 	SET(Spawn);
 	SET(SpecialMesg);
+	SET(ZoneSpawns);
 
 	REUSE_4BYTEto2BYTE(Assist);
 	REUSE_4BYTEto2BYTE(Despawn);

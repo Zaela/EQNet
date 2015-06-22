@@ -136,7 +136,6 @@ typedef struct EQNetPacket_Spawn {
 	uint32_t isLfg : 1;
 	uint32_t isLinkdead : 1;
 	uint32_t isFindable : 1;
-	uint32_t isShowHelm : 1;
 	uint32_t isGuildOfficer : 1;
 	uint32_t isGuildLeader : 1;
 	uint32_t isSneaking : 1;

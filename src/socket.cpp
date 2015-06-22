@@ -164,8 +164,8 @@ void Socket::queuePacket(Packet* packet)
 void Socket::sendPacketFragmented(Packet* p)
 {
 	// fragment packets:
-	// first chunk - proto op, seq, 32-bit length, 504 bytes of data
-	// subsequent - proto op, seq, 508 bytes of data
+	// first chunk - proto op, seq, 32-bit length, 502 bytes of data
+	// subsequent - proto op, seq, 506 bytes of data
 
 	byte* data = p->getRawBuffer();
 	uint32_t len = p->lengthWithOverhead();
@@ -188,7 +188,7 @@ void Socket::sendPacketFragmented(Packet* p)
 	uint32_t* lenPtr = (uint32_t*)(buf + 4);
 	*lenPtr = toNetworkLong(len - minus); 
 
-	// copy first 504 bytes
+	// copy first 502 bytes
 	memcpy(buf + 8, data + minus, 502);
 	uint32_t pos = minus + 502;
 

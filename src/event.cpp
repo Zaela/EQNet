@@ -39,13 +39,10 @@ int EQNet_Poll(EQNet* net, EQNet_Event* ev)
 		if (ev.type != EQNET_EVENT_Packet)
 			continue;
 
-		if (ev.packet.data)
+		if (ev.packet.data && !isNoDeleteOpcode(ev.packet.opcode))
 		{
-			if (!isNoDeleteOpcode(ev.packet.opcode))
-			{
-				checkSpecialDestructor(ev.packet, ev.count);
-				delete[] ev.packet.data;
-			}
+			checkSpecialDestructor(ev.packet, ev.count);
+			delete[] ev.packet.data;
 		}
 	}
 
