@@ -46,7 +46,7 @@ private:
 	static PacketSequence compareSequence(uint16_t got, uint16_t expected);
 
 private:
-	int copyFragment(ReadPacket* out, int outOffset, uint16_t i, int offset = 0);
+	int copyFragment(ReadPacket* out, int outOffset, uint16_t i);
 	void checkFragmentComplete();
 	void checkAfterPacket();
 	void startFragSequence(byte* data, uint16_t seq);

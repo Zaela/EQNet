@@ -133,10 +133,11 @@ void AckManager::checkInboundFragment(byte* packet, uint32_t len, uint32_t off)
 	case SEQUENCE_PRESENT:
 	{
 		// this is the starting packet of a fragment sequence
-		startFragSequence(packet, seq);
-		mFuturePackets[seq] = new ReadPacket(packet + off + 2, len - off - 2);
+		startFragSequence(packet + off + 2, seq);
+		mFuturePackets[seq] = new ReadPacket(packet + off + 2 + 4, len - off - 2 - 4);
 
 		checkFragmentComplete();
+		break;
 	}
 	case SEQUENCE_FUTURE:
 	{
@@ -158,12 +159,12 @@ void AckManager::checkInboundFragment(byte* packet, uint32_t len, uint32_t off)
 	} // switch
 }
 
-int AckManager::copyFragment(ReadPacket* out, int outOffset, uint16_t i, int offset)
+int AckManager::copyFragment(ReadPacket* out, int outOffset, uint16_t i)
 {
 	ReadPacket* sub = mFuturePackets[i];
 	mFuturePackets[i] = nullptr;
-	uint32_t copy_len = sub->len - offset;
-	memcpy(out->data + outOffset, sub->data + offset, copy_len);
+	uint32_t copy_len = sub->len;
+	memcpy(out->data + outOffset, sub->data, copy_len);
 	delete sub;
 	return copy_len;
 }
@@ -174,7 +175,7 @@ void AckManager::checkFragmentComplete()
 	if (rp == nullptr)
 		return;
 
-	uint32_t len = rp->len - 4;
+	uint32_t len = rp->len;
 	uint16_t i = mFragStart + 1;
 	while (len < mFragExpectedLen)
 	{
@@ -189,7 +190,7 @@ void AckManager::checkFragmentComplete()
 	ReadPacket* out = new ReadPacket(nullptr, len);
 
 	// copy first piece
-	uint32_t pos = copyFragment(out, 0, mFragStart, 4);
+	uint32_t pos = copyFragment(out, 0, mFragStart);
 
 	// copy subsequence pieces
 	i = mFragStart + 1;
@@ -332,7 +333,7 @@ void AckManager::startFragSequence(byte* data, uint16_t seq)
 	// some fragmented packets misreport their size by a byte or two,
 	// so this may fail in obscure circumstances
 
-	mFragExpectedLen = toHostLong(*(uint32_t*)(data + 4));
+	mFragExpectedLen = toHostLong(*(uint32_t*)data);
 }
 
 void AckManager::clearReadPacketQueue()
